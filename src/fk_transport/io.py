@@ -40,7 +40,7 @@ def _json_safe(value: Any) -> Any:
 
 def atomic_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
+    temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     temporary.write_text(
         json.dumps(
             _json_safe(data),
@@ -57,14 +57,14 @@ def atomic_json(path: Path, data: Any) -> None:
 
 def atomic_npz(path: Path, **arrays: np.ndarray) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
+    temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     with temporary.open("wb") as handle:
         np.savez_compressed(handle, **arrays)
     os.replace(temporary, path)
 
 
 def atomic_gzip_csv(path: Path, header: list[str], columns: list[np.ndarray]) -> None:
-    temporary = path.with_name(path.name + ".tmp")
+    temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     with gzip.open(temporary, "wt", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(header)
@@ -149,7 +149,7 @@ def save_point(
         for i, residual in enumerate(solution.residual_history)
     ]
     convergence_path = directory / "convergence.csv"
-    temporary = convergence_path.with_name(convergence_path.name + ".tmp")
+    temporary = convergence_path.with_name(convergence_path.name + f".{os.getpid()}.tmp")
     with temporary.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(convergence_rows[0]))
         writer.writeheader()
