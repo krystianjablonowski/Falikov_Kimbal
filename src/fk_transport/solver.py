@@ -196,7 +196,7 @@ def solve_medium(
         residual = _residual(new_hybridization, hybridization)
         sigma = reconstruct_self_energy(omega, green, hybridization, mu, broadening)
         residuals.append(residual)
-        sum_rules.append(float(np.trapezoid(medium_rho, omega)))
+        sum_rules.append(float(np.trapz(medium_rho, omega)))
         minima.append(float(np.min(medium_rho)))
         floor_counts.append(floor_count)
         causal_history.append(float(np.max(sigma.imag)))
@@ -227,7 +227,7 @@ def solve_medium(
     sigma = reconstruct_self_energy(omega, green, hybridization, mu, broadening)
     if not residuals or final_residual != residuals[-1]:
         residuals.append(final_residual)
-        sum_rules.append(float(np.trapezoid(medium_rho, omega)))
+        sum_rules.append(float(np.trapz(medium_rho, omega)))
         minima.append(float(np.min(medium_rho)))
         floor_counts.append(floor_count)
         causal_history.append(float(np.max(sigma.imag)))
@@ -238,8 +238,8 @@ def solve_medium(
     metrics.update(
         {
             "final_residual": final_residual,
-            "sum_rule_medium": float(np.trapezoid(spectral_dos, omega)),
-            "sum_rule_arith_bath": float(np.trapezoid(rho_arith, omega)),
+            "sum_rule_medium": float(np.trapz(spectral_dos, omega)),
+            "sum_rule_arith_bath": float(np.trapz(rho_arith, omega)),
             "rho_zero": float(spectral_dos[omega.size // 2]),
             "rho_arith_zero": float(rho_arith[omega.size // 2]),
             "rho_typ_zero": float(rho_typ[omega.size // 2]),

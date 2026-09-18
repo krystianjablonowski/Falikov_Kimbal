@@ -23,7 +23,7 @@ def fermi_function(omega: np.ndarray, temperature: float) -> np.ndarray:
 
 
 def particle_density(omega: np.ndarray, rho_arith_bath: np.ndarray, temperature: float) -> float:
-    return float(np.trapezoid(fermi_function(omega, temperature) * rho_arith_bath, omega))
+    return float(np.trapz(fermi_function(omega, temperature) * rho_arith_bath, omega))
 
 
 def transport_observables(
@@ -34,9 +34,9 @@ def transport_observables(
     moment_tolerance: float = 1.0e-12,
 ) -> dict[str, float | bool | str]:
     weight = minus_fermi_derivative(omega, temperature)
-    l11 = float(np.trapezoid(weight * tau, omega))
-    l12 = float(np.trapezoid(weight * omega * tau, omega))
-    l22 = float(np.trapezoid(weight * omega**2 * tau, omega))
+    l11 = float(np.trapz(weight * tau, omega))
+    l12 = float(np.trapz(weight * omega * tau, omega))
+    l22 = float(np.trapz(weight * omega**2 * tau, omega))
     determinant = l11 * l22 - l12 * l12
     scale = max(abs(l11 * l22), abs(l12 * l12), 1.0)
     cs_ok = determinant >= -float(moment_tolerance) * scale

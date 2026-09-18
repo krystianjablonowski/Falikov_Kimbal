@@ -48,4 +48,4 @@ def hilbert_green_direct(
     kernel = 1.0 / (
         evaluation_omega[:, None] + 1j * float(broadening) - omega[None, :]
     )
-    return np.trapezoid(kernel * rho[None, :], omega, axis=1)
+    return np.trapz(kernel * rho[None, :], omega, axis=1)

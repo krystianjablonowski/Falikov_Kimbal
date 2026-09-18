@@ -15,7 +15,7 @@ class ObservableTests(unittest.TestCase):
         omega = frequency_grid(2.0, 20001)
         derivative = minus_fermi_derivative(omega, 0.02)
         self.assertTrue(np.all(np.isfinite(derivative)))
-        self.assertAlmostEqual(float(np.trapezoid(derivative, omega)), 1.0, places=8)
+        self.assertAlmostEqual(float(np.trapz(derivative, omega)), 1.0, places=8)
 
     def test_constant_tau_has_wiedemann_franz_limit(self):
         omega = frequency_grid(2.0, 20001)
