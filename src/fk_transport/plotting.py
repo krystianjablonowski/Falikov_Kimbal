@@ -21,7 +21,7 @@ def plot_summary(summary_path: str | Path, output_path: str | Path | None = None
     for row in rows:
         key = (row["branch"], row["interaction"], row["temperature"])
         groups.setdefault(key, []).append(row)
-    for axis, (field, label) in zip(axes.flat, quantities, strict=True):
+    for axis, (field, label) in zip(axes.flat, quantities):
         for key, group in groups.items():
             group.sort(key=lambda item: float(item["disorder_full_width"]))
             axis.scatter(

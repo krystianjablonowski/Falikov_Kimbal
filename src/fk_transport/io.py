@@ -68,7 +68,7 @@ def atomic_gzip_csv(path: Path, header: list[str], columns: list[np.ndarray]) ->
     with gzip.open(temporary, "wt", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(header)
-        writer.writerows(zip(*columns, strict=True))
+        writer.writerows(zip(*columns))
     os.replace(temporary, path)
 
 
