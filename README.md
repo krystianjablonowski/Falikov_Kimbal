@@ -110,11 +110,12 @@ PYTHON_EXECUTABLE="$PWD/.venv/bin/python" \
 RUN_LABEL=pilot_half_filling qsub jobs/publish_results_to_github.sh
 ```
 
-Publikowane są scalone `summary.csv`, status, konfiguracja i raport walidacji.
-Surowe tablice każdego punktu pozostają na Kruku, ponieważ pełny skan może być
-znacznie większy niż praktyczne limity GitHub. Jeśli potrzebne jest trwałe
-archiwum wszystkich `solution.npz`, należy użyć magazynu danych lub Git LFS,
-nie zwykłego repozytorium Git.
+Wyniki trafiają do osobnej gałęzi `results`, więc lokalna gałąź `main` zawiera
+wyłącznie programy. Domyślnie publikowane są scalony `summary.csv`, status,
+manifest, konfiguracja i raport walidacji. Pełny katalog wynikowy można wysłać
+przez `PUBLISH_MODE=full`, o ile żaden plik nie przekracza 95 MB. Duże skany
+powinny korzystać z magazynu danych lub Git LFS, ponieważ zwykłe repozytorium
+GitHub nie jest przeznaczone do wielkich tablic numerycznych.
 
 Jeżeli instalacja Kruka używa starego Torque zamiast PBS Pro i nie rozpoznaje
 `qsub -J`, zamień w `jobs/submit_pbs_array.sh` opcję `-J` na `-t`; worker
