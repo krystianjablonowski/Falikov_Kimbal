@@ -11,4 +11,4 @@ if [[ "${TASKS}" -lt 1 ]]; then
   exit 2
 fi
 
-qsub -J "0-$((TASKS - 1))" -v "CONFIG=${CONFIG},PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}" jobs/run_pbs_array.sh
+qsub -t "0-$((TASKS - 1))" -v "CONFIG=${CONFIG},PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}" jobs/run_pbs_array.sh
