@@ -5,6 +5,8 @@
 #PBS -j oe
 
 set -euo pipefail
+export PYTHONNOUSERSITE=1
+unset PYTHONHOME
 cd "${PBS_O_WORKDIR:?PBS_O_WORKDIR is not set}"
 
 PYTHON_EXECUTABLE="${PYTHON_EXECUTABLE:-python3}"
@@ -16,5 +18,5 @@ if [[ -z "${ARRAY_INDEX}" ]]; then
   exit 2
 fi
 
-export PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH="${PWD}/src"
 "${PYTHON_EXECUTABLE}" -m fk_transport sweep --config "${CONFIG}" --index "${ARRAY_INDEX}"
