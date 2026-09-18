@@ -40,7 +40,7 @@ mkdir -p "${DESTINATION}"
 if [[ "${PUBLISH_MODE}" == "full" ]]; then
   cp -a "${RESULT_ROOT}/." "${DESTINATION}/"
 elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
-  for name in summary.csv status.json validation_report.json rerun_indices.txt manifest.json; do
+  for name in summary.csv status.json validation_report.json rerun_indices.txt manifest.json transport_summary.png; do
     if [[ -f "${RESULT_ROOT}/${name}" ]]; then
       cp "${RESULT_ROOT}/${name}" "${DESTINATION}/${name}"
     fi

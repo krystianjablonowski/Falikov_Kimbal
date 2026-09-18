@@ -16,7 +16,7 @@ def plot_summary(summary_path: str | Path, output_path: str | Path | None = None
         raise ValueError("summary contains no successful points")
     output = Path(output_path) if output_path else summary_path.with_name("transport_summary.png")
     fig, axes = plt.subplots(2, 2, figsize=(10, 7), constrained_layout=True)
-    quantities = [("sigma", r"$\sigma$"), ("kappa_e", r"$\kappa_e$"), ("lorenz_over_L0", r"$\mathcal L/\mathcal L_0$"), ("iterations", "iterations")]
+    quantities = [("sigma", r"$\sigma$"), ("kappa_e", r"$\kappa_e$"), ("lorenz_over_L0", "Lorenz / L0"), ("iterations", "iterations")]
     groups: dict[tuple[str, str, str], list[dict]] = {}
     for row in rows:
         key = (row["branch"], row["interaction"], row["temperature"])
