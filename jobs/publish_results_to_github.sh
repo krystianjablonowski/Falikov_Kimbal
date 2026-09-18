@@ -31,7 +31,7 @@ if git ls-remote --exit-code --heads origin "${RESULTS_BRANCH}" >/dev/null 2>&1;
 else
   git worktree add --detach "${PUBLISH_WORKTREE}" HEAD
   git -C "${PUBLISH_WORKTREE}" switch --orphan "${RESULTS_BRANCH}"
-  git -C "${PUBLISH_WORKTREE}" rm -rf .
+  git -C "${PUBLISH_WORKTREE}" rm -rf . || true
 fi
 
 DESTINATION="${PUBLISH_WORKTREE}/${RUN_LABEL}"
