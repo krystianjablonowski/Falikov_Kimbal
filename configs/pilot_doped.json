@@ -1,0 +1,25 @@
+{
+  "model": {"half_bandwidth": 0.5, "hopping": 0.25, "w1": 0.5},
+  "grid": {"omega_max": 5.0, "n_omega": 5001},
+  "numerics": {
+    "broadening": 0.001,
+    "n_disorder_quadrature": 64,
+    "n_band_quadrature": 192,
+    "mixing": 0.35,
+    "tolerance": 1e-8,
+    "max_iterations": 900,
+    "rho_floor": 1e-300,
+    "hilbert_padding_factor": 16,
+    "checkpoint_every": 25,
+    "causality_tolerance": 5e-5
+  },
+  "sweep": {
+    "interactions": [0.3, 0.5, 1.0],
+    "disorder_full_widths": [0.0, 0.5, 1.0, 1.5],
+    "branches": ["arith", "typ"],
+    "temperatures": [0.01, 0.02],
+    "target_fillings": [0.45, 0.40, 0.35, 0.30]
+  },
+  "filling": {"mu_min": -3.0, "mu_max": 3.0, "tolerance": 1e-6, "max_iterations": 50},
+  "output": {"directory": "results/pilot_doped"}
+}

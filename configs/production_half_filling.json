@@ -1,0 +1,24 @@
+{
+  "model": {"half_bandwidth": 0.5, "hopping": 0.25, "w1": 0.5},
+  "grid": {"omega_max": 6.0, "n_omega": 12001},
+  "numerics": {
+    "broadening": 0.0005,
+    "n_disorder_quadrature": 128,
+    "n_band_quadrature": 320,
+    "mixing": 0.35,
+    "tolerance": 1e-9,
+    "max_iterations": 1200,
+    "rho_floor": 1e-300,
+    "hilbert_padding_factor": 16,
+    "checkpoint_every": 20,
+    "causality_tolerance": 5e-6
+  },
+  "sweep": {
+    "interactions": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0],
+    "disorder_full_widths": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4],
+    "branches": ["arith", "typ"],
+    "temperatures": [0.005, 0.01, 0.02, 0.04],
+    "target_fillings": [0.5]
+  },
+  "output": {"directory": "results/production_half_filling"}
+}

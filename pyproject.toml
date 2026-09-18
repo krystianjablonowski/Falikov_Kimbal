@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fk-transport"
+version = "0.1.0"
+description = "DMFT/TMT transport for the disordered spinless Falicov-Kimball model"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=6"]
+plot = ["matplotlib>=3.7"]
+test = ["pytest>=7"]
+
+[project.scripts]
+fk-transport = "fk_transport.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
