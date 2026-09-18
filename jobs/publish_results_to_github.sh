@@ -5,7 +5,7 @@
 #PBS -j oe
 
 set -euo pipefail
-cd "${PBS_O_WORKDIR:?PBS_O_WORKDIR is not set}"
+cd "${PBS_O_WORKDIR:-$PWD}"
 
 PYTHON_EXECUTABLE="${PYTHON_EXECUTABLE:-python3}"
 CONFIG="${CONFIG:-configs/pilot_half_filling.json}"
