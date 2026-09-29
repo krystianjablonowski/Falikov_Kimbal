@@ -175,6 +175,54 @@ zarówno w metalu, jak i izolatorze. Brakujące albo odrzucone punkty pozostają
 puste — program ich nie interpoluje. Jest to skan rozpoznawczy; przed publikacją
 należy zagęścić okolice granic i wykonać test zbieżności parametrów numerycznych.
 
+### Etap 2: adaptacyjne zagęszczenie granic
+
+Polecenie `refine-boundaries` czyta regularny skan etapu 1 i tworzy nową
+konfigurację zawierającą wyłącznie konkretne, nieregularnie rozmieszczone pary
+`(U, Delta)`. Komórka coarse grid jest wybierana, jeśli zakres `log10` co
+najmniej jednej obserwabli przekracza zadany `--log-jump`. Domyślnie granice są
+wyznaczane z gałęzi `typ` w najniższej dostępnej temperaturze na podstawie
+`sigma`, `kappa_e`, `charge_diffusivity_proxy` i
+`thermal_diffusivity_proxy`. Jedna warstwa sąsiednich komórek jest dodawana jako
+bufor.
+
+Po pobraniu wyników etapu 1 na Kruku:
+
+```bash
+source .venv/bin/activate
+export PYTHONPATH="$PWD/src"
+
+python -m fk_transport refine-boundaries \
+  --config configs/stage1_half_filling_refined.json \
+  --input results/stage1_half_filling_refined/summary.csv \
+  --output-config configs/stage2_boundaries.json \
+  --output-directory results/stage2_boundaries \
+  --u-step 0.025 --disorder-step 0.025 \
+  --log-jump 0.75 --padding-cells 1 \
+  --batch-size 8 --max-jobs 399
+```
+
+Kroki są podawane w jednostkach `U/W` i `Delta/W`. Program wypisuje liczbę
+nowych par, punktów spektralnych, jobów PBS oraz minimalny `BATCH_SIZE`, który
+utrzymuje tablicę pod limitem. Nie powtarza punktów obecnych w etapie 1.
+Wygenerowany plik można przed wysłaniem sprawdzić:
+
+```bash
+python -m fk_transport manifest --config configs/stage2_boundaries.json
+```
+
+Jeśli raport zawiera `"within_job_limit": true`, obliczenia uruchamia się z tą
+samą wielkością paczki, która została przekazana generatorowi:
+
+```bash
+BATCH_SIZE=8 PYTHON_EXECUTABLE="$PWD/.venv/bin/python" \
+bash jobs/submit_pbs_array.sh configs/stage2_boundaries.json
+```
+
+Jeśli `within_job_limit` jest fałszywe, należy użyć wartości wypisanej jako
+`minimum_batch_size_for_limit`. Zwiększa to liczbę punktów liczonych kolejno w
+jednym jobie, ale nie zmienia siatki ani wyników.
+
 ## Kruk / PBS
 
 Na klastrze skopiuj cały katalog `fk_transport`, utwórz środowisko Pythona i

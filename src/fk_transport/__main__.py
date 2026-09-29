@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .config import load_config
+from .boundary_refinement import DEFAULT_FIELDS, generate_boundary_config
 from .io import atomic_json
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
@@ -53,6 +54,22 @@ def _parser() -> argparse.ArgumentParser:
     activation_map.add_argument("--temperature-min", type=float)
     activation_map.add_argument("--temperature-max", type=float)
     activation_map.add_argument("--output")
+    refine = sub.add_parser("refine-boundaries")
+    refine.add_argument("--config", required=True, help="coarse-stage configuration")
+    refine.add_argument("--input", required=True, help="coarse-stage summary.csv")
+    refine.add_argument("--output-config", required=True)
+    refine.add_argument("--output-directory", default="results/stage2_boundaries")
+    refine.add_argument("--fields", nargs="+", default=list(DEFAULT_FIELDS))
+    refine.add_argument("--branch", choices=["arith", "typ"], default="typ")
+    refine.add_argument("--temperature", type=float)
+    refine.add_argument("--filling", type=float, default=0.5)
+    refine.add_argument("--u-step", type=float, default=0.025, help="step in U/W")
+    refine.add_argument("--disorder-step", type=float, default=0.025, help="step in Delta/W")
+    refine.add_argument("--log-jump", type=float, default=0.75, help="minimum cell range in decades")
+    refine.add_argument("--value-floor", type=float, default=1.0e-14)
+    refine.add_argument("--padding-cells", type=int, default=1)
+    refine.add_argument("--batch-size", type=int, default=8)
+    refine.add_argument("--max-jobs", type=int, default=399)
     return parser
 
 
@@ -85,6 +102,28 @@ def main(argv: list[str] | None = None) -> int:
             args.output,
         )
         print(json.dumps({"activation_summary": str(output)}, indent=2))
+        return 0
+
+    if args.command == "refine-boundaries":
+        cfg = load_config(args.config)
+        report = generate_boundary_config(
+            cfg,
+            args.input,
+            args.output_config,
+            fields=args.fields,
+            branch=args.branch,
+            temperature=args.temperature,
+            filling=args.filling,
+            u_step_ratio=args.u_step,
+            disorder_step_ratio=args.disorder_step,
+            log_jump=args.log_jump,
+            value_floor=args.value_floor,
+            padding_cells=args.padding_cells,
+            output_directory=args.output_directory,
+            batch_size=args.batch_size,
+            max_jobs=args.max_jobs,
+        )
+        print(json.dumps(report, indent=2))
         return 0
 
     cfg = load_config(args.config)

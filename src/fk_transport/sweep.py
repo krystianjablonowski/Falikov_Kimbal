@@ -23,38 +23,48 @@ def build_tasks(cfg: dict) -> list[dict[str, Any]]:
     sweep = cfg["sweep"]
     tasks: list[dict[str, Any]] = []
     index = 0
-    for interaction in sweep["interactions"]:
-        for disorder in sweep["disorder_full_widths"]:
-            for branch in sweep["branches"]:
-                fillings = [float(x) for x in sweep["target_fillings"]]
-                if fillings == [0.5] and float(cfg["model"]["w1"]) == 0.5:
-                    tasks.append(
-                        {
-                            "index": index,
-                            "interaction": float(interaction),
-                            "disorder_full_width": float(disorder),
-                            "branch": branch,
-                            "target_filling": 0.5,
-                            "temperatures": [float(x) for x in sweep["temperatures"]],
-                            "half_filling": True,
-                        }
-                    )
-                    index += 1
-                else:
-                    for filling in fillings:
-                        for temperature in sweep["temperatures"]:
-                            tasks.append(
-                                {
-                                    "index": index,
-                                    "interaction": float(interaction),
-                                    "disorder_full_width": float(disorder),
-                                    "branch": branch,
-                                    "target_filling": float(filling),
-                                    "temperatures": [float(temperature)],
-                                    "half_filling": False,
-                                }
-                            )
-                            index += 1
+    if sweep.get("parameter_points") is not None:
+        parameter_points = [
+            (float(point["interaction"]), float(point["disorder_full_width"]))
+            for point in sweep["parameter_points"]
+        ]
+    else:
+        parameter_points = [
+            (float(interaction), float(disorder))
+            for interaction in sweep["interactions"]
+            for disorder in sweep["disorder_full_widths"]
+        ]
+    for interaction, disorder in parameter_points:
+        for branch in sweep["branches"]:
+            fillings = [float(x) for x in sweep["target_fillings"]]
+            if fillings == [0.5] and float(cfg["model"]["w1"]) == 0.5:
+                tasks.append(
+                    {
+                        "index": index,
+                        "interaction": interaction,
+                        "disorder_full_width": disorder,
+                        "branch": branch,
+                        "target_filling": 0.5,
+                        "temperatures": [float(x) for x in sweep["temperatures"]],
+                        "half_filling": True,
+                    }
+                )
+                index += 1
+            else:
+                for filling in fillings:
+                    for temperature in sweep["temperatures"]:
+                        tasks.append(
+                            {
+                                "index": index,
+                                "interaction": interaction,
+                                "disorder_full_width": disorder,
+                                "branch": branch,
+                                "target_filling": float(filling),
+                                "temperatures": [float(temperature)],
+                                "half_filling": False,
+                            }
+                        )
+                        index += 1
     return tasks
 
 

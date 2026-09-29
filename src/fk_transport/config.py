@@ -90,6 +90,22 @@ def validate_config(cfg: dict[str, Any]) -> None:
         raise ValueError("branches may contain only 'arith' and 'typ'")
     if any(float(x) < 0 for x in sweep["disorder_full_widths"]):
         raise ValueError("disorder_full_widths must be non-negative")
+    parameter_points = sweep.get("parameter_points")
+    if parameter_points is not None:
+        if not isinstance(parameter_points, list) or not parameter_points:
+            raise ValueError("parameter_points must be a non-empty list when provided")
+        seen: set[tuple[float, float]] = set()
+        for point in parameter_points:
+            if not isinstance(point, dict) or not {"interaction", "disorder_full_width"} <= point.keys():
+                raise ValueError(
+                    "every parameter point must define interaction and disorder_full_width"
+                )
+            pair = (float(point["interaction"]), float(point["disorder_full_width"]))
+            if pair[1] < 0:
+                raise ValueError("parameter-point disorder must be non-negative")
+            if pair in seen:
+                raise ValueError(f"duplicate parameter point: {pair}")
+            seen.add(pair)
     if any(float(x) <= 0 for x in sweep["temperatures"]):
         raise ValueError("temperatures must be positive")
 
