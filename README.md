@@ -168,6 +168,7 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/production_half_filling.json` — gęstsza siatka produkcyjna;
 - `configs/byczuk_transport_coarse.json` — regularna mapa `(U/W, Delta/W)`;
 - `configs/byczuk_transport_refined.json` — mapa `25 x 31 x 2`, grupowana w 388 jobów;
+- `configs/pilot_filling_0p75.json` — mały test transportu dla `n_c=0.75`, `w1=0.5`;
 - `configs/pilot_doped.json` — `n_c=0.45, 0.40, 0.35, 0.30` z doborem `mu`.
 
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
