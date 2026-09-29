@@ -36,6 +36,14 @@ else
 fi
 
 DESTINATION="${PUBLISH_WORKTREE}/${RUN_LABEL}"
+case "${DESTINATION}" in
+  "${PUBLISH_WORKTREE}"/*) ;;
+  *)
+    echo "Refusing to refresh destination outside the publish worktree: ${DESTINATION}" >&2
+    exit 4
+    ;;
+esac
+rm -rf -- "${DESTINATION}"
 mkdir -p "${DESTINATION}"
 
 if [[ "${PUBLISH_MODE}" == "full" ]]; then
