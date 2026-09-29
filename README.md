@@ -72,6 +72,18 @@ python -m fk_transport merge --config configs/pilot_half_filling.json
 python -m fk_transport plot --config configs/pilot_half_filling.json
 ```
 
+Polecenie `plot` tworzy osobne podsumowanie dla każdej temperatury i
+wypełnienia. Dla każdej temperatury powstają również cztery zestawy map:
+
+- `transport_heatmaps_*` — `sigma` i `kappa_e`;
+- `thermodynamic_heatmaps_*` — elektronowe `c_V` i `K0_thermo`;
+- `diffusivity_heatmaps_*` — diagnostyczne `D_c` i `D_E`;
+- `diagnostic_heatmaps_*` — liczba Lorenza i wariancja energii transportowej.
+
+Mapy używają wspólnej logarytmicznej normalizacji gałęzi arytmetycznej i TMT
+oraz kontrastowej palety `inferno`. Opis osi `U/W` jest pokazywany tylko w lewej
+kolumnie, a colorbary mają osobną kolumnę poza panelami danych.
+
 ### Etap 1: zależność temperaturowa i elektronowe ciepło właściwe
 
 Każdy nowy punkt zapisuje dodatkowo transportową średnią i wariancję energii,

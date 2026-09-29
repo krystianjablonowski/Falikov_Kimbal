@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .config import load_config
 from .io import atomic_json
-from .plotting import plot_summary, plot_transport_heatmaps
+from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
 from .temperature_analysis import (
     fit_activation_groups,
@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "plot":
         summary = output_root(cfg) / "summary.csv"
         bandwidth = 2.0 * float(cfg["model"]["half_bandwidth"])
-        outputs = [plot_summary(summary, bandwidth=bandwidth)]
+        outputs = plot_all_temperature_summaries(summary, bandwidth=bandwidth)
         outputs.extend(
             plot_transport_heatmaps(
                 summary,

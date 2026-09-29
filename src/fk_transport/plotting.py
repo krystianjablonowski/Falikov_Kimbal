@@ -46,7 +46,7 @@ def _draw_map(axis, x, y, values, title, norm):
         y,
         np.ma.masked_invalid(values),
         shading="nearest",
-        cmap="cividis",
+        cmap="inferno",
         norm=norm,
     )
     axis.set_title(title)
@@ -102,6 +102,8 @@ def plot_summary(
     summary_path: str | Path,
     output_path: str | Path | None = None,
     bandwidth: float = 1.0,
+    filling: float | None = None,
+    temperature: float | None = None,
 ) -> Path:
     try:
         import matplotlib
@@ -112,22 +114,40 @@ def plot_summary(
     summary_path = Path(summary_path)
     rows = _read_rows(summary_path)
     output = Path(output_path) if output_path else summary_path.with_name("transport_summary.png")
-    filling = sorted({float(row["target_filling"]) for row in rows})[0]
-    temperature = sorted({float(row["temperature"]) for row in rows})[0]
+    filling = (
+        sorted({float(row["target_filling"]) for row in rows})[0]
+        if filling is None
+        else float(filling)
+    )
+    temperature = (
+        sorted({float(row["temperature"]) for row in rows})[0]
+        if temperature is None
+        else float(temperature)
+    )
     available_u = np.array(sorted({float(row["interaction"]) for row in rows}))
     targets = np.linspace(float(available_u.min()), float(available_u.max()), min(5, available_u.size))
     selected_u = sorted({float(available_u[np.argmin(np.abs(available_u - target))]) for target in targets})
-    colors = plt.get_cmap("viridis")(np.linspace(0.08, 0.92, len(selected_u)))
+    colors = plt.get_cmap("turbo")(np.linspace(0.05, 0.95, len(selected_u)))
     color_by_u = dict(zip(selected_u, colors))
     branch_style = {"arith": ("-", "o"), "typ": ("--", "s")}
-    quantities = [
+    candidates = [
         ("sigma", r"$\sigma$", True),
         ("kappa_e", r"$\kappa_{\mathrm{e}}$", True),
+        ("c_v_electronic", r"$c_V^{\mathrm{el}}$", True),
         ("lorenz_over_L0", r"$L/L_0$", False),
-        ("iterations", "iterations", False),
+        ("charge_diffusivity_proxy", r"$D_c$", True),
+        ("thermal_diffusivity_proxy", r"$D_E$", True),
     ]
+    quantities = [item for item in candidates if item[0] in rows[0]]
+    columns = 3 if len(quantities) >= 5 else 2
+    rows_count = int(np.ceil(len(quantities) / columns))
     with plt.rc_context(_publication_style()):
-        fig, axes = plt.subplots(2, 2, figsize=(7.0, 5.2))
+        fig, axes = plt.subplots(
+            rows_count,
+            columns,
+            figsize=(9.2 if columns == 3 else 7.0, 2.65 * rows_count),
+            squeeze=False,
+        )
         for panel, (axis, (field, label, logarithmic)) in enumerate(zip(axes.flat, quantities)):
             for interaction in selected_u:
                 for branch, (line_style, marker) in branch_style.items():
@@ -155,6 +175,8 @@ def plot_summary(
             axis.set_xlabel(r"$\Delta/W$")
             axis.set_ylabel(label)
             _finish_axis(axis, f"({chr(97 + panel)})")
+        for axis in axes.flat[len(quantities):]:
+            axis.set_visible(False)
 
         from matplotlib.lines import Line2D
         u_handles = [
@@ -169,11 +191,41 @@ def plot_summary(
         ]
         fig.legend(handles=u_handles + branch_handles, loc="upper center", ncol=4,
                    frameon=False, bbox_to_anchor=(0.5, 0.995))
-        fig.suptitle(rf"$n_c={filling:g}$, $T/W={temperature / bandwidth:g}$", y=0.91, fontsize=9)
-        fig.subplots_adjust(left=0.10, right=0.98, bottom=0.10, top=0.80, wspace=0.30, hspace=0.34)
+        fig.suptitle(rf"$n_c={filling:g}$, $T/W={temperature / bandwidth:g}$", y=0.90, fontsize=9)
+        fig.subplots_adjust(left=0.08, right=0.98, bottom=0.10, top=0.78, wspace=0.38, hspace=0.36)
         _save_publication_figure(fig, output)
         plt.close(fig)
     return output
+
+
+def plot_all_temperature_summaries(
+    summary_path: str | Path,
+    output_directory: str | Path | None = None,
+    bandwidth: float = 1.0,
+) -> list[Path]:
+    """Create a complete line-plot summary for every filling and temperature."""
+    summary_path = Path(summary_path)
+    rows = _read_rows(summary_path)
+    output_directory = Path(output_directory) if output_directory else summary_path.parent
+    output_directory.mkdir(parents=True, exist_ok=True)
+    outputs: list[Path] = []
+    for filling in sorted({float(row["target_filling"]) for row in rows}):
+        filling_tag = f"{filling:.6g}".replace(".", "p")
+        for temperature in sorted({float(row["temperature"]) for row in rows}):
+            temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
+            output = output_directory / (
+                f"transport_summary_n_{filling_tag}_T_{temperature_tag}.png"
+            )
+            outputs.append(
+                plot_summary(
+                    summary_path,
+                    output,
+                    bandwidth,
+                    filling=filling,
+                    temperature=temperature,
+                )
+            )
+    return outputs
 
 
 def plot_transport_heatmaps(
@@ -214,7 +266,7 @@ def plot_transport_heatmaps(
             with plt.rc_context(_publication_style()):
                 fig = plt.figure(figsize=(7.4, 3.0))
                 grid_spec = fig.add_gridspec(
-                    1, 3, width_ratios=(1.0, 1.0, 0.045), wspace=0.18
+                    1, 3, width_ratios=(1.0, 1.0, 0.045), wspace=0.24
                 )
                 axes = np.asarray(
                     [
@@ -231,6 +283,9 @@ def plot_transport_heatmaps(
                         axis, x, y, values,
                         rf"{branch}: $\sigma(T\to0)$, $n_c={filling:g}$", norm,
                     )
+                    if panel == 1:
+                        axis.set_ylabel("")
+                        axis.tick_params(labelleft=False)
                     _finish_axis(axis, f"({chr(97 + panel)})")
                 if image is not None:
                     fig.colorbar(image, cax=color_axis, label=r"$\sigma_0$")
@@ -242,53 +297,95 @@ def plot_transport_heatmaps(
                 plt.close(fig)
                 outputs.append(output)
 
+        heatmap_groups = [
+            (
+                "transport",
+                (("sigma", r"$\sigma$"), ("kappa_e", r"$\kappa_{\mathrm{e}}$")),
+            ),
+            (
+                "thermodynamic",
+                (("c_v_electronic", r"$c_V^{\mathrm{el}}$"), ("K0_thermo", r"$\chi_c$")),
+            ),
+            (
+                "diffusivity",
+                (
+                    ("charge_diffusivity_proxy", r"$D_c$"),
+                    ("thermal_diffusivity_proxy", r"$D_E$"),
+                ),
+            ),
+            (
+                "diagnostic",
+                (
+                    ("lorenz_over_L0", r"$L/L_0$"),
+                    ("transport_energy_variance", r"$\mathrm{Var}_{\rm tr}(\omega)$"),
+                ),
+            ),
+        ]
+        available_groups = [
+            (name, fields)
+            for name, fields in heatmap_groups
+            if all(field in rows[0] for field, _ in fields)
+        ]
         for temperature in temperatures:
-            fields = (("sigma", r"$\sigma$"), ("kappa_e", r"$\kappa_{\mathrm{e}}$"))
-            grids_by_field = {
-                field: [_grid(normalized_rows, branch, temperature, filling, field) for branch in branches]
-                for field, _ in fields
-            }
-            norms = {field: _log_norm([grid[2] for grid in grids]) for field, grids in grids_by_field.items()}
-            with plt.rc_context(_publication_style()):
-                fig = plt.figure(figsize=(7.4, 5.5))
-                grid_spec = fig.add_gridspec(
-                    2,
-                    3,
-                    width_ratios=(1.0, 1.0, 0.045),
-                    wspace=0.18,
-                    hspace=0.28,
-                )
-                axes = np.empty((2, 2), dtype=object)
-                color_axes = []
-                for row_index in range(2):
-                    for column in range(2):
-                        axes[row_index, column] = fig.add_subplot(
-                            grid_spec[row_index, column]
-                        )
-                    color_axes.append(fig.add_subplot(grid_spec[row_index, 2]))
-                for axis in axes.flat[1:]:
-                    axis.sharex(axes[0, 0])
-                    axis.sharey(axes[0, 0])
-                panel = 0
-                for row_index, (field, symbol) in enumerate(fields):
-                    row_image = None
-                    for column, (branch, (x, y, values)) in enumerate(zip(branches, grids_by_field[field])):
-                        axis = axes[row_index, column]
-                        row_image = _draw_map(
-                            axis, x, y, values,
-                            rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$",
-                            norms[field],
-                        )
-                        _finish_axis(axis, f"({chr(97 + panel)})")
-                        panel += 1
-                    if row_image is not None:
-                        fig.colorbar(row_image, cax=color_axes[row_index], label=symbol)
-                    else:
-                        color_axes[row_index].set_visible(False)
-                fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
-                temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
-                output = output_directory / f"transport_heatmaps_n_{filling_tag}_T_{temperature_tag}.png"
-                _save_publication_figure(fig, output)
-                plt.close(fig)
-                outputs.append(output)
+            temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
+            for group_name, fields in available_groups:
+                grids_by_field = {
+                    field: [_grid(normalized_rows, branch, temperature, filling, field) for branch in branches]
+                    for field, _ in fields
+                }
+                norms = {
+                    field: _log_norm([grid[2] for grid in grids])
+                    for field, grids in grids_by_field.items()
+                }
+                with plt.rc_context(_publication_style()):
+                    fig = plt.figure(figsize=(7.8, 5.5))
+                    grid_spec = fig.add_gridspec(
+                        2,
+                        3,
+                        width_ratios=(1.0, 1.0, 0.045),
+                        wspace=0.24,
+                        hspace=0.28,
+                    )
+                    axes = np.empty((2, 2), dtype=object)
+                    color_axes = []
+                    for row_index in range(2):
+                        for column in range(2):
+                            axes[row_index, column] = fig.add_subplot(
+                                grid_spec[row_index, column]
+                            )
+                        color_axes.append(fig.add_subplot(grid_spec[row_index, 2]))
+                    for axis in axes.flat[1:]:
+                        axis.sharex(axes[0, 0])
+                        axis.sharey(axes[0, 0])
+                    panel = 0
+                    for row_index, (field, symbol) in enumerate(fields):
+                        row_image = None
+                        for column, (branch, (x, y, values)) in enumerate(
+                            zip(branches, grids_by_field[field])
+                        ):
+                            axis = axes[row_index, column]
+                            row_image = _draw_map(
+                                axis,
+                                x,
+                                y,
+                                values,
+                                rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$",
+                                norms[field],
+                            )
+                            if column == 1:
+                                axis.set_ylabel("")
+                                axis.tick_params(labelleft=False)
+                            _finish_axis(axis, f"({chr(97 + panel)})")
+                            panel += 1
+                        if row_image is not None:
+                            fig.colorbar(row_image, cax=color_axes[row_index], label=symbol)
+                        else:
+                            color_axes[row_index].set_visible(False)
+                    fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
+                    output = output_directory / (
+                        f"{group_name}_heatmaps_n_{filling_tag}_T_{temperature_tag}.png"
+                    )
+                    _save_publication_figure(fig, output)
+                    plt.close(fig)
+                    outputs.append(output)
     return outputs
