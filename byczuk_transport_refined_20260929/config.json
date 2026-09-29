@@ -1,0 +1,24 @@
+{
+  "model": {"half_bandwidth": 0.5, "hopping": 0.25, "w1": 0.5},
+  "grid": {"omega_max": 4.0, "n_omega": 10001},
+  "numerics": {
+    "broadening": 0.0005,
+    "n_disorder_quadrature": 96,
+    "n_band_quadrature": 256,
+    "mixing": 0.35,
+    "tolerance": 5e-9,
+    "max_iterations": 1200,
+    "rho_floor": 1e-300,
+    "hilbert_padding_factor": 16,
+    "checkpoint_every": 25,
+    "causality_tolerance": 5e-5
+  },
+  "sweep": {
+    "interactions": [0.0, 0.0833333333, 0.1666666667, 0.25, 0.3333333333, 0.4166666667, 0.5, 0.5833333333, 0.6666666667, 0.75, 0.8333333333, 0.9166666667, 1.0, 1.0833333333, 1.1666666667, 1.25, 1.3333333333, 1.4166666667, 1.5, 1.5833333333, 1.6666666667, 1.75, 1.8333333333, 1.9166666667, 2.0],
+    "disorder_full_widths": [0.0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48, 0.56, 0.64, 0.72, 0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0, 2.08, 2.16, 2.24, 2.32, 2.4],
+    "branches": ["arith", "typ"],
+    "temperatures": [0.01, 0.02],
+    "target_fillings": [0.5]
+  },
+  "output": {"directory": "results/byczuk_transport_refined"}
+}
