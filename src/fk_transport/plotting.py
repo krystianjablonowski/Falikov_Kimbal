@@ -15,7 +15,12 @@ def _read_rows(summary_path: Path) -> list[dict[str, str]]:
 
 
 def _grid(
-    rows: list[dict[str, str]], branch: str, temperature: float, filling: float, field: str
+    rows: list[dict[str, str]],
+    branch: str,
+    temperature: float,
+    filling: float,
+    field: str,
+    positive_only: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     selected = [
         row
@@ -31,22 +36,22 @@ def _grid(
     d_index = {value: index for index, value in enumerate(disorders)}
     for row in selected:
         value = float(row[field])
-        if np.isfinite(value) and value > 0.0:
+        if np.isfinite(value) and (value > 0.0 or not positive_only):
             values[u_index[float(row["interaction"])], d_index[float(row["disorder_full_width"])]] = value
     return disorders, interactions, values
 
 
-def _draw_map(axis, x, y, values, title, norm):
-    positive = values[np.isfinite(values) & (values > 0.0)]
-    if positive.size == 0:
-        axis.text(0.5, 0.5, "no positive data", ha="center", va="center", transform=axis.transAxes)
+def _draw_map(axis, x, y, values, title, norm, cmap="inferno"):
+    finite = values[np.isfinite(values)]
+    if finite.size == 0:
+        axis.text(0.5, 0.5, "no finite data", ha="center", va="center", transform=axis.transAxes)
         return None
     image = axis.pcolormesh(
         x,
         y,
         np.ma.masked_invalid(values),
         shading="nearest",
-        cmap="inferno",
+        cmap=cmap,
         norm=norm,
     )
     axis.set_title(title)
@@ -67,6 +72,18 @@ def _log_norm(arrays):
     if lower == upper:
         upper = lower * (1.0 + 1.0e-12)
     return LogNorm(vmin=lower, vmax=upper)
+
+
+def _signed_norm(arrays):
+    from matplotlib.colors import Normalize
+
+    finite = np.concatenate([array[np.isfinite(array)] for array in arrays])
+    if finite.size == 0:
+        return None
+    limit = float(np.max(np.abs(finite)))
+    if limit == 0.0:
+        limit = 1.0e-12
+    return Normalize(vmin=-limit, vmax=limit)
 
 
 def _publication_style() -> dict:
@@ -133,6 +150,7 @@ def plot_summary(
     candidates = [
         ("sigma", r"$\sigma$", True),
         ("kappa_e", r"$\kappa_{\mathrm{e}}$", True),
+        ("thermopower", r"$S$", False),
         ("c_v_electronic", r"$c_V^{\mathrm{el}}$", True),
         ("lorenz_over_L0", r"$L/L_0$", False),
         ("charge_diffusivity_proxy", r"$D_c$", True),
@@ -309,10 +327,20 @@ def plot_transport_heatmaps(
             (
                 "transport",
                 (("sigma", r"$\sigma$"), ("kappa_e", r"$\kappa_{\mathrm{e}}$")),
+                "log",
+            ),
+            (
+                "thermoelectric",
+                (
+                    ("thermopower", r"$S$"),
+                    ("dmu_dT_fixed_density", r"$(\partial\mu/\partial T)_n$"),
+                ),
+                "signed",
             ),
             (
                 "thermodynamic",
                 (("c_v_electronic", r"$c_V^{\mathrm{el}}$"), ("K0_thermo", r"$\chi_c$")),
+                "log",
             ),
             (
                 "diffusivity",
@@ -320,6 +348,7 @@ def plot_transport_heatmaps(
                     ("charge_diffusivity_proxy", r"$D_c$"),
                     ("thermal_diffusivity_proxy", r"$D_E$"),
                 ),
+                "log",
             ),
             (
                 "diagnostic",
@@ -327,22 +356,37 @@ def plot_transport_heatmaps(
                     ("lorenz_over_L0", r"$L/L_0$"),
                     ("transport_energy_variance", r"$\mathrm{Var}_{\rm tr}(\omega)$"),
                 ),
+                "log",
             ),
         ]
         available_groups = [
-            (name, fields)
-            for name, fields in heatmap_groups
+            (name, fields, scale)
+            for name, fields, scale in heatmap_groups
             if all(field in rows[0] for field, _ in fields)
         ]
         for temperature in temperatures:
             temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
-            for group_name, fields in available_groups:
+            for group_name, fields, scale in available_groups:
                 grids_by_field = {
-                    field: [_grid(normalized_rows, branch, temperature, filling, field) for branch in branches]
+                    field: [
+                        _grid(
+                            normalized_rows,
+                            branch,
+                            temperature,
+                            filling,
+                            field,
+                            positive_only=(scale == "log"),
+                        )
+                        for branch in branches
+                    ]
                     for field, _ in fields
                 }
                 norms = {
-                    field: _log_norm([grid[2] for grid in grids])
+                    field: (
+                        _log_norm([grid[2] for grid in grids])
+                        if scale == "log"
+                        else _signed_norm([grid[2] for grid in grids])
+                    )
                     for field, grids in grids_by_field.items()
                 }
                 with plt.rc_context(_publication_style()):
@@ -379,6 +423,7 @@ def plot_transport_heatmaps(
                                 values,
                                 rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$",
                                 norms[field],
+                                cmap="inferno" if scale == "log" else "coolwarm",
                             )
                             if column == 1:
                                 axis.set_ylabel("")
