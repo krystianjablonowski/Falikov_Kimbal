@@ -130,6 +130,12 @@ def _run_task_unlocked(cfg: dict, index: int) -> dict:
         )
         for temperature in task["temperatures"]
     ]
+    # At T -> 0, -df/domega becomes delta(omega), hence sigma is tau(0).
+    # Store it in every temperature row so it is available in the flat summary.
+    zero_index = int(np.argmin(np.abs(solution.omega)))
+    sigma_t0 = float(tau[zero_index])
+    for observable in observables:
+        observable["sigma_T0"] = sigma_t0
     save_point(directory, cfg, task, solution, tau, observables, filling_info)
     return {"directory": str(directory), "status": solution.status, "task": task}
 

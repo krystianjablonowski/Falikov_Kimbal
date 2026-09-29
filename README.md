@@ -76,6 +76,22 @@ python -m fk_transport plot --config configs/pilot_half_filling.json
 punkty jako `success`, `not_converged`, `noncausal`, `corrupt`, `missing` albo
 `config_mismatch` i zapisuje `rerun_indices.txt`.
 
+### Mapa transportowa odpowiadająca diagramowi Byczuka
+
+Konfiguracja `configs/byczuk_transport_coarse.json` skanuje regularną siatkę
+`21 x 25 x 2 = 1050` niezależnych zadań `(U, Delta, branch)` przy half-fillingu.
+Po `merge` polecenie `plot` zapisuje nieinterpolowane mapy kolorów:
+
+- `transport_heatmap_sigma_T0.png` — `sigma(T -> 0) = tau(omega=0)` dla DMFT i TMT;
+- `transport_heatmaps_T_0p01.png` i `transport_heatmaps_T_0p02.png` — skończone
+  temperaturowo `sigma` i `kappa_e`.
+
+Osie są podane w jednostkach `W=2D`; w tej konfiguracji `W=1`. Cieplna
+przewodność nie ma użytecznej mapy dokładnie w `T=0`, ponieważ wtedy znika
+zarówno w metalu, jak i izolatorze. Brakujące albo odrzucone punkty pozostają
+puste — program ich nie interpoluje. Jest to skan rozpoznawczy; przed publikacją
+należy zagęścić okolice granic i wykonać test zbieżności parametrów numerycznych.
+
 ## Kruk / PBS
 
 Na klastrze skopiuj cały katalog `fk_transport`, utwórz środowisko Pythona i
@@ -140,6 +156,7 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/validation.json` — szybkie testy czystego limitu;
 - `configs/pilot_half_filling.json` — pilot z notatki, w tym `U=0.3`, `Delta=1.8`;
 - `configs/production_half_filling.json` — gęstsza siatka produkcyjna;
+- `configs/byczuk_transport_coarse.json` — regularna mapa `(U/W, Delta/W)`;
 - `configs/pilot_doped.json` — `n_c=0.45, 0.40, 0.35, 0.30` z doborem `mu`.
 
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem

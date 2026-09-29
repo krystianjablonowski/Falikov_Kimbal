@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .config import load_config
 from .io import atomic_json
-from .plotting import plot_summary
+from .plotting import plot_summary, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
 from .validation import run_validation
 
@@ -67,7 +67,15 @@ def main(argv: list[str] | None = None) -> int:
         print(merge_results(cfg))
         return 0
     if args.command == "plot":
-        print(plot_summary(output_root(cfg) / "summary.csv"))
+        summary = output_root(cfg) / "summary.csv"
+        outputs = [plot_summary(summary)]
+        outputs.extend(
+            plot_transport_heatmaps(
+                summary,
+                bandwidth=2.0 * float(cfg["model"]["half_bandwidth"]),
+            )
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
     return 1
 

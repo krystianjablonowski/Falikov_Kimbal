@@ -40,9 +40,16 @@ mkdir -p "${DESTINATION}"
 if [[ "${PUBLISH_MODE}" == "full" ]]; then
   cp -a "${RESULT_ROOT}/." "${DESTINATION}/"
 elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
-  for name in summary.csv status.json validation_report.json rerun_indices.txt manifest.json transport_summary.png; do
-    if [[ -f "${RESULT_ROOT}/${name}" ]]; then
-      cp "${RESULT_ROOT}/${name}" "${DESTINATION}/${name}"
+  for source in \
+    "${RESULT_ROOT}/summary.csv" \
+    "${RESULT_ROOT}/status.json" \
+    "${RESULT_ROOT}/validation_report.json" \
+    "${RESULT_ROOT}/rerun_indices.txt" \
+    "${RESULT_ROOT}/manifest.json" \
+    "${RESULT_ROOT}/transport_summary.png" \
+    "${RESULT_ROOT}"/transport_heatmap*.png; do
+    if [[ -f "${source}" ]]; then
+      cp "${source}" "${DESTINATION}/$(basename "${source}")"
     fi
   done
 else
