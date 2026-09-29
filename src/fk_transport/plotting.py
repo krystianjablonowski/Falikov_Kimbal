@@ -41,7 +41,16 @@ def _grid(
     return disorders, interactions, values
 
 
-def _draw_map(axis, x, y, values, title, norm, cmap="inferno"):
+def _draw_map(
+    axis,
+    x,
+    y,
+    values,
+    title,
+    norm,
+    cmap="inferno",
+    zero_contour: bool = False,
+):
     finite = values[np.isfinite(values)]
     if finite.size == 0:
         axis.text(0.5, 0.5, "no finite data", ha="center", va="center", transform=axis.transAxes)
@@ -54,6 +63,16 @@ def _draw_map(axis, x, y, values, title, norm, cmap="inferno"):
         cmap=cmap,
         norm=norm,
     )
+    if zero_contour and float(finite.min()) < 0.0 < float(finite.max()):
+        axis.contour(
+            x,
+            y,
+            np.ma.masked_invalid(values),
+            levels=[0.0],
+            colors="white",
+            linewidths=0.8,
+            linestyles="--",
+        )
     axis.set_title(title)
     axis.set_xlabel(r"disorder $\Delta/W$")
     axis.set_ylabel(r"interaction $U/W$")
@@ -84,6 +103,28 @@ def _signed_norm(arrays):
     if limit == 0.0:
         limit = 1.0e-12
     return Normalize(vmin=-limit, vmax=limit)
+
+
+def _signed_colormap():
+    """Black-centred map with visually distinct negative and positive arms."""
+    from matplotlib.colors import LinearSegmentedColormap
+
+    colormap = LinearSegmentedColormap.from_list(
+        "transport_signed",
+        [
+            (0.00, "#eff51c"),
+            (0.16, "#4dbd83"),
+            (0.32, "#355f9f"),
+            (0.46, "#24134f"),
+            (0.50, "#000000"),
+            (0.54, "#3a0707"),
+            (0.68, "#9e0b22"),
+            (0.84, "#ef2b1d"),
+            (1.00, "#ffd84a"),
+        ],
+    )
+    colormap.set_bad("white")
+    return colormap
 
 
 def _publication_style() -> dict:
@@ -423,7 +464,8 @@ def plot_transport_heatmaps(
                                 values,
                                 rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$",
                                 norms[field],
-                                cmap="inferno" if scale == "log" else "coolwarm",
+                                cmap="inferno" if scale == "log" else _signed_colormap(),
+                                zero_contour=(scale == "signed"),
                             )
                             if column == 1:
                                 axis.set_ylabel("")
