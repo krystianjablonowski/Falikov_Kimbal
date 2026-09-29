@@ -378,6 +378,8 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/pilot_filling_0p75.json` — mały test transportu dla `n_c=0.75`, `w1=0.5`;
 - `configs/byczuk_transport_refined_filling_0p75.json` — mapa `25 x 31 x 2` dla `n_c=0.75`;
 - `configs/pilot_doped.json` — `n_c=0.45, 0.40, 0.35, 0.30` z doborem `mu`.
+- `configs/stage4_filling_0p4.json` — regularny pilot `9 x 12 x 2 x 4`
+  dla `n_c=0.4`; 864 zadania spektralne, grupowane po trzy w 288 jobów PBS.
 
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
 zbieżności. Tolerancję przyczynowości należy ustalić na podstawie kontroli
