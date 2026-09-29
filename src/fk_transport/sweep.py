@@ -222,6 +222,7 @@ def merge_results(cfg: dict) -> Path:
         if metadata["config_hash"] != expected_hash:
             continue
         observables = json.loads((directory / "observables.json").read_text(encoding="utf-8"))
+        filling = metadata.get("filling") or {}
         for observable in observables:
             row = {
                 **metadata["task"],
@@ -230,6 +231,10 @@ def merge_results(cfg: dict) -> Path:
                 **metadata["metrics"],
                 **observable,
             }
+            if "obtained" in filling:
+                row["obtained_filling"] = filling["obtained"]
+                row["filling_error"] = filling["error"]
+                row["filling_solver_evaluations"] = filling["solver_evaluations"]
             row["temperatures"] = json.dumps(row["temperatures"])
             rows.append(row)
     path = root / "summary.csv"

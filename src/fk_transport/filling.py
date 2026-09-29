@@ -78,10 +78,8 @@ def solve_for_filling(
             upper, f_upper = middle, error
         else:
             lower, f_lower = middle, error
-    return FillingResult(
-        best_solution,
-        target_filling,
-        best_density,
-        best_density - target_filling,
-        len(cache),
+    raise RuntimeError(
+        "filling bisection did not converge: "
+        f"target={target_filling:.16g}, obtained={best_density:.16g}, "
+        f"error={best_density - target_filling:.6g}, evaluations={len(cache)}"
     )
