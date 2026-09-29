@@ -68,11 +68,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "plot":
         summary = output_root(cfg) / "summary.csv"
-        outputs = [plot_summary(summary)]
+        bandwidth = 2.0 * float(cfg["model"]["half_bandwidth"])
+        outputs = [plot_summary(summary, bandwidth=bandwidth)]
         outputs.extend(
             plot_transport_heatmaps(
                 summary,
-                bandwidth=2.0 * float(cfg["model"]["half_bandwidth"]),
+                bandwidth=bandwidth,
             )
         )
         print(json.dumps([str(path) for path in outputs], indent=2))

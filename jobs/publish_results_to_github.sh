@@ -48,7 +48,8 @@ elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
     "${RESULT_ROOT}/rerun_indices.txt" \
     "${RESULT_ROOT}/manifest.json" \
     "${RESULT_ROOT}/transport_summary.png" \
-    "${RESULT_ROOT}"/transport_heatmap*.png; do
+    "${RESULT_ROOT}"/transport_heatmap*.png \
+    "${RESULT_ROOT}"/transport_*.pdf; do
     if [[ -f "${source}" ]]; then
       cp "${source}" "${DESTINATION}/$(basename "${source}")"
     fi

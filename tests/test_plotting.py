@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fk_transport.plotting import plot_transport_heatmaps
+from fk_transport.plotting import plot_summary, plot_transport_heatmaps
 
 
 class PlottingTests(unittest.TestCase):
@@ -26,6 +26,8 @@ class PlottingTests(unittest.TestCase):
                 "sigma_T0",
                 "sigma",
                 "kappa_e",
+                "lorenz_over_L0",
+                "iterations",
             ]
             with summary.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(handle, fieldnames=fieldnames)
@@ -43,11 +45,17 @@ class PlottingTests(unittest.TestCase):
                                     "sigma_T0": 1.0 + interaction + disorder,
                                     "sigma": 0.5 + interaction + disorder,
                                     "kappa_e": 0.01 + interaction + disorder,
+                                    "lorenz_over_L0": 1.0 + interaction,
+                                    "iterations": 20 + int(10 * disorder),
                                 }
                             )
             outputs = plot_transport_heatmaps(summary)
             self.assertEqual(len(outputs), 2)
             self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in outputs))
+            self.assertTrue(all(path.with_suffix(".pdf").is_file() for path in outputs))
+            overview = plot_summary(summary)
+            self.assertTrue(overview.is_file() and overview.stat().st_size > 0)
+            self.assertTrue(overview.with_suffix(".pdf").is_file())
 
 
 if __name__ == "__main__":
