@@ -11,7 +11,10 @@ import numpy as np
 from .config import config_hash
 from .filling import solve_for_filling
 from .io import atomic_json, point_directory, save_point
-from .observables import particle_density, transport_observables
+from .observables import (
+    combined_observables,
+    particle_density,
+)
 from .solver import solve_medium
 from .transport import transport_function
 
@@ -120,16 +123,18 @@ def _run_task_unlocked(cfg: dict, index: int) -> dict:
         float(cfg["numerics"]["broadening"]),
         int(cfg["numerics"]["n_band_quadrature"]),
     )
-    observables = [
-        transport_observables(
+    observables = []
+    for temperature in task["temperatures"]:
+        observable = combined_observables(
             solution.omega,
             tau,
+            solution.rho_arith,
             temperature,
+            solution.chemical_potential,
             float(cfg["numerics"]["l11_floor"]),
             float(cfg["numerics"]["moment_tolerance"]),
         )
-        for temperature in task["temperatures"]
-    ]
+        observables.append(observable)
     # At T -> 0, -df/domega becomes delta(omega), hence sigma is tau(0).
     # Store it in every temperature row so it is available in the flat summary.
     zero_index = int(np.argmin(np.abs(solution.omega)))

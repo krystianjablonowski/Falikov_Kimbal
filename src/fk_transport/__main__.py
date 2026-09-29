@@ -9,6 +9,12 @@ from .config import load_config
 from .io import atomic_json
 from .plotting import plot_summary, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
+from .temperature_analysis import (
+    fit_activation_groups,
+    fit_temperature_scan,
+    plot_temperature_scan,
+    reweight_point,
+)
 from .validation import run_validation
 
 
@@ -25,11 +31,62 @@ def _parser() -> argparse.ArgumentParser:
     solve.add_argument("--U", required=True, type=float)
     solve.add_argument("--disorder", required=True, type=float)
     solve.add_argument("--branch", required=True, choices=["arith", "typ"])
+    reweight = sub.add_parser("reweight")
+    reweight.add_argument("--point", required=True)
+    reweight.add_argument("--temperatures", required=True, nargs="+", type=float)
+    reweight.add_argument("--output")
+    reweight.add_argument("--plot", action="store_true")
+    activation = sub.add_parser("activation-fit")
+    activation.add_argument("--input", required=True)
+    activation.add_argument("--fields", nargs="+", default=["sigma", "kappa_e"])
+    activation.add_argument("--temperature-min", type=float)
+    activation.add_argument("--temperature-max", type=float)
+    activation.add_argument("--output")
+    activation_map = sub.add_parser("activation-map")
+    activation_map.add_argument("--input", required=True)
+    activation_map.add_argument("--fields", nargs="+", default=["sigma", "kappa_e"])
+    activation_map.add_argument(
+        "--group-by",
+        nargs="+",
+        default=["branch", "interaction", "disorder_full_width", "target_filling"],
+    )
+    activation_map.add_argument("--temperature-min", type=float)
+    activation_map.add_argument("--temperature-max", type=float)
+    activation_map.add_argument("--output")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "reweight":
+        scan = reweight_point(args.point, args.temperatures, args.output)
+        result = {"temperature_scan": str(scan)}
+        if args.plot:
+            result["plot"] = str(plot_temperature_scan(scan))
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "activation-fit":
+        output = fit_temperature_scan(
+            args.input,
+            args.fields,
+            args.temperature_min,
+            args.temperature_max,
+            args.output,
+        )
+        print(json.dumps({"activation_fits": str(output)}, indent=2))
+        return 0
+    if args.command == "activation-map":
+        output = fit_activation_groups(
+            args.input,
+            args.fields,
+            args.group_by,
+            args.temperature_min,
+            args.temperature_max,
+            args.output,
+        )
+        print(json.dumps({"activation_summary": str(output)}, indent=2))
+        return 0
+
     cfg = load_config(args.config)
     if args.command == "validate":
         report = run_validation(cfg)

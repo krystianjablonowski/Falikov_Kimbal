@@ -72,6 +72,72 @@ python -m fk_transport merge --config configs/pilot_half_filling.json
 python -m fk_transport plot --config configs/pilot_half_filling.json
 ```
 
+### Etap 1: zależność temperaturowa i elektronowe ciepło właściwe
+
+Każdy nowy punkt zapisuje dodatkowo transportową średnią i wariancję energii,
+niezależną kontrolę tożsamości
+
+```text
+kappa_e = sigma * transport_energy_variance / T
+```
+
+oraz elektronowe ciepło właściwe przy stałej gęstości
+
+```text
+c_v_electronic = (K2_thermo - K1_thermo^2 / K0_thermo) / T.
+```
+
+Zapisywane są też ilorazy `charge_diffusivity_proxy = sigma/K0_thermo` oraz
+`thermal_diffusivity_proxy = kappa_e/c_v_electronic`. Przy half-fillingu, gdy
+`L12=0`, odpowiadają one rozprzężonym skalarnym dyfuzyjnościom. Poza
+half-fillingiem są tylko diagnostyką; fizyczne mody dyfuzji wymagają pełnej
+macierzy sprzężonego transportu ładunku i energii.
+
+Termodynamika korzysta z arytmetycznej DOS, również dla kąpieli TMT. Formuła
+dotyczy jednorodnej fazy z ustalonym `w1`; nie zawiera wkładu fononowego,
+temperaturowej zmiany koncentracji cząstek nieruchomych ani uporządkowania CDW.
+
+Konfiguracja `configs/stage1_half_filling.json` zawiera trzy reprezentatywne
+wartości oddziaływania, przekrój przez nieporządek i gęstą listę temperatur.
+Przy half-fillingu jedna konwergentna funkcja spektralna jest używana dla
+wszystkich temperatur, więc zwiększenie liczby temperatur jest tanie.
+
+Z już zapisanego punktu można obliczyć nową siatkę temperatur bez ponownego
+uruchamiania DMFT/TMT:
+
+```bash
+python -m fk_transport reweight \
+  --point results/stage1_half_filling/points/point_000000 \
+  --temperatures 0.005 0.0075 0.01 0.015 0.02 0.03 0.05 0.08 \
+  --plot
+```
+
+Powstają `temperature_scan.csv` oraz, z opcją `--plot`, wykres PNG/PDF. Dopasowanie
+energii aktywacji dla przewodności elektrycznej i cieplnej wykonuje polecenie:
+
+```bash
+python -m fk_transport activation-fit \
+  --input results/stage1_half_filling/points/point_000000/temperature_scan.csv \
+  --fields sigma kappa_e \
+  --temperature-min 0.005 --temperature-max 0.03
+```
+
+Plik `activation_fits.json` zawiera zwykły fit Arrheniusa oraz fit
+`A*T^p*exp(-E/T)`. Ten drugi wymaga co najmniej trzech temperatur i powinien być
+interpretowany razem z raportowanym uwarunkowaniem macierzy dopasowania.
+
+Po scaleniu całego skanu można automatycznie dopasować każdy punkt
+`(branch, U, Delta, filling)` bez mieszania różnych parametrów:
+
+```bash
+python -m fk_transport activation-map \
+  --input results/stage1_half_filling/summary.csv \
+  --fields sigma kappa_e c_v_electronic \
+  --temperature-min 0.005 --temperature-max 0.03
+```
+
+Wyniki są zapisywane w `activation_summary.csv`.
+
 `manifest` podaje liczbę zadań i ostatni indeks tablicy. `status` klasyfikuje
 punkty jako `success`, `not_converged`, `noncausal`, `corrupt`, `missing` albo
 `config_mismatch` i zapisuje `rerun_indices.txt`.
