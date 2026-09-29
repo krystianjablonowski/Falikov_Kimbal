@@ -230,13 +230,14 @@ python -m fk_transport analyze-boundaries \
   --coarse results/stage1_half_filling_refined/summary.csv \
   --refined results/stage2_boundaries/summary.csv \
   --output-directory results/stage2_boundaries \
-  --thresholds 1e-4 1e-6 1e-8 \
+  --thresholds 1e-2 1e-4 1e-6 \
   --bandwidth 1.0
 ```
 
-Komenda zapisuje `combined_summary.csv`, `boundary_crossings.csv`, adaptacyjne
-mapy triangulowane oraz wykresy położeń wszystkich przecięć progowych dla
-`sigma_typ` i `kappa_e_typ` w każdej temperaturze. Kilka progów jest celowe:
+Komenda zapisuje `combined_summary.csv`, `relative_boundary_crossings.csv`,
+`relative_boundary_differences.csv`, `gradient_boundaries.csv` oraz wykresy
+granic wyznaczonych z bezwymiarowych ilorazów `sigma_typ/sigma_arith` i
+`kappa_typ/kappa_arith`. Kilka progów jest celowe:
 stabilność linii względem progu pozwala odróżnić fizyczną granicę od arbitralnej
 definicji numerycznego zera.
 

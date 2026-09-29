@@ -75,7 +75,8 @@ def _parser() -> argparse.ArgumentParser:
     analyze.add_argument("--coarse", required=True)
     analyze.add_argument("--refined", required=True)
     analyze.add_argument("--output-directory", required=True)
-    analyze.add_argument("--thresholds", nargs="+", type=float, default=[1e-4, 1e-6, 1e-8])
+    analyze.add_argument("--thresholds", nargs="+", type=float, default=[1e-2, 1e-4, 1e-6],
+                         help="dimensionless thresholds for typ/arith ratios")
     analyze.add_argument("--bandwidth", type=float, default=1.0)
     return parser
 
