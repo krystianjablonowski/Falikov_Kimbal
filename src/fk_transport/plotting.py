@@ -49,7 +49,6 @@ def _draw_map(
     title,
     norm,
     cmap="inferno",
-    zero_contour: bool = False,
 ):
     finite = values[np.isfinite(values)]
     if finite.size == 0:
@@ -63,16 +62,6 @@ def _draw_map(
         cmap=cmap,
         norm=norm,
     )
-    if zero_contour and float(finite.min()) < 0.0 < float(finite.max()):
-        axis.contour(
-            x,
-            y,
-            np.ma.masked_invalid(values),
-            levels=[0.0],
-            colors="white",
-            linewidths=0.8,
-            linestyles="--",
-        )
     axis.set_title(title)
     axis.set_xlabel(r"disorder $\Delta/W$")
     axis.set_ylabel(r"interaction $U/W$")
@@ -465,7 +454,6 @@ def plot_transport_heatmaps(
                                 rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$",
                                 norms[field],
                                 cmap="inferno" if scale == "log" else _signed_colormap(),
-                                zero_contour=(scale == "signed"),
                             )
                             if column == 1:
                                 axis.set_ylabel("")
