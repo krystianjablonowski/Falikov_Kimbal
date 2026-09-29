@@ -212,7 +212,19 @@ def plot_transport_heatmaps(
             grids = [_grid(normalized_rows, branch, first_temperature, filling, "sigma_T0") for branch in branches]
             norm = _log_norm([grid[2] for grid in grids])
             with plt.rc_context(_publication_style()):
-                fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0), sharex=True, sharey=True)
+                fig = plt.figure(figsize=(7.4, 3.0))
+                grid_spec = fig.add_gridspec(
+                    1, 3, width_ratios=(1.0, 1.0, 0.045), wspace=0.18
+                )
+                axes = np.asarray(
+                    [
+                        fig.add_subplot(grid_spec[0, 0]),
+                        fig.add_subplot(grid_spec[0, 1]),
+                    ]
+                )
+                axes[1].sharex(axes[0])
+                axes[1].sharey(axes[0])
+                color_axis = fig.add_subplot(grid_spec[0, 2])
                 image = None
                 for panel, (axis, branch, (x, y, values)) in enumerate(zip(axes, branches, grids)):
                     image = _draw_map(
@@ -221,8 +233,10 @@ def plot_transport_heatmaps(
                     )
                     _finish_axis(axis, f"({chr(97 + panel)})")
                 if image is not None:
-                    fig.colorbar(image, ax=axes, label=r"$\sigma_0$", fraction=0.045, pad=0.025)
-                fig.subplots_adjust(left=0.09, right=0.90, bottom=0.16, top=0.91, wspace=0.12)
+                    fig.colorbar(image, cax=color_axis, label=r"$\sigma_0$")
+                else:
+                    color_axis.set_visible(False)
+                fig.subplots_adjust(left=0.09, right=0.94, bottom=0.16, top=0.91)
                 output = output_directory / f"transport_heatmap_n_{filling_tag}_sigma_T0.png"
                 _save_publication_figure(fig, output)
                 plt.close(fig)
@@ -236,7 +250,25 @@ def plot_transport_heatmaps(
             }
             norms = {field: _log_norm([grid[2] for grid in grids]) for field, grids in grids_by_field.items()}
             with plt.rc_context(_publication_style()):
-                fig, axes = plt.subplots(2, 2, figsize=(7.0, 5.5), sharex=True, sharey=True)
+                fig = plt.figure(figsize=(7.4, 5.5))
+                grid_spec = fig.add_gridspec(
+                    2,
+                    3,
+                    width_ratios=(1.0, 1.0, 0.045),
+                    wspace=0.18,
+                    hspace=0.28,
+                )
+                axes = np.empty((2, 2), dtype=object)
+                color_axes = []
+                for row_index in range(2):
+                    for column in range(2):
+                        axes[row_index, column] = fig.add_subplot(
+                            grid_spec[row_index, column]
+                        )
+                    color_axes.append(fig.add_subplot(grid_spec[row_index, 2]))
+                for axis in axes.flat[1:]:
+                    axis.sharex(axes[0, 0])
+                    axis.sharey(axes[0, 0])
                 panel = 0
                 for row_index, (field, symbol) in enumerate(fields):
                     row_image = None
@@ -250,9 +282,10 @@ def plot_transport_heatmaps(
                         _finish_axis(axis, f"({chr(97 + panel)})")
                         panel += 1
                     if row_image is not None:
-                        fig.colorbar(row_image, ax=axes[row_index, :], label=symbol,
-                                     fraction=0.045, pad=0.025)
-                fig.subplots_adjust(left=0.09, right=0.90, bottom=0.10, top=0.94, wspace=0.12, hspace=0.25)
+                        fig.colorbar(row_image, cax=color_axes[row_index], label=symbol)
+                    else:
+                        color_axes[row_index].set_visible(False)
+                fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
                 temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
                 output = output_directory / f"transport_heatmaps_n_{filling_tag}_T_{temperature_tag}.png"
                 _save_publication_figure(fig, output)

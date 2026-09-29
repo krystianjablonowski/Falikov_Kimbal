@@ -102,6 +102,10 @@ wartości oddziaływania, przekrój przez nieporządek i gęstą listę temperat
 Przy half-fillingu jedna konwergentna funkcja spektralna jest używana dla
 wszystkich temperatur, więc zwiększenie liczby temperatur jest tanie.
 
+Do map publikacyjnych służy `configs/stage1_half_filling_refined.json`: siatka
+`25 x 31 x 2 = 1550` punktów spektralnych i ta sama lista ośmiu temperatur.
+Przy `BATCH_SIZE=4` skan wymaga 388 zadań PBS.
+
 Z już zapisanego punktu można obliczyć nową siatkę temperatur bez ponownego
 uruchamiania DMFT/TMT:
 
