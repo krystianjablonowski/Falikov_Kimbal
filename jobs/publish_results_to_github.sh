@@ -43,6 +43,7 @@ if [[ "${PUBLISH_MODE}" == "full" ]]; then
 elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
   for source in \
     "${RESULT_ROOT}/summary.csv" \
+    "${RESULT_ROOT}/activation_summary.csv" \
     "${RESULT_ROOT}/status.json" \
     "${RESULT_ROOT}/validation_report.json" \
     "${RESULT_ROOT}/rerun_indices.txt" \
