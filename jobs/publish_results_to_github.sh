@@ -65,6 +65,7 @@ elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
     "${RESULT_ROOT}"/combined_summary.csv \
     "${RESULT_ROOT}"/relative_boundary_crossings.csv \
     "${RESULT_ROOT}"/relative_boundary_differences.csv \
+    "${RESULT_ROOT}"/relative_boundary_separation_summary.csv \
     "${RESULT_ROOT}"/gradient_boundaries.csv \
     "${RESULT_ROOT}"/relative_boundary_level_status.csv \
     "${RESULT_ROOT}"/*.pdf; do

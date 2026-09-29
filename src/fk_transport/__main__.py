@@ -78,6 +78,8 @@ def _parser() -> argparse.ArgumentParser:
     analyze.add_argument("--thresholds", nargs="+", type=float, default=[1e-2, 1e-4, 1e-6],
                          help="dimensionless thresholds for typ/arith ratios")
     analyze.add_argument("--bandwidth", type=float, default=1.0)
+    analyze.add_argument("--max-boundary-separation", type=float, default=0.1)
+    analyze.add_argument("--ambiguity-tolerance", type=float, default=0.025)
     return parser
 
 
@@ -135,7 +137,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "analyze-boundaries":
         outputs = analyze_boundaries(args.coarse, args.refined, args.output_directory,
-                                     args.thresholds, args.bandwidth)
+                                     args.thresholds, args.bandwidth,
+                                     args.max_boundary_separation, args.ambiguity_tolerance)
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
 

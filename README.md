@@ -231,7 +231,9 @@ python -m fk_transport analyze-boundaries \
   --refined results/stage2_boundaries/summary.csv \
   --output-directory results/stage2_boundaries \
   --thresholds 1e-2 1e-4 1e-6 \
-  --bandwidth 1.0
+  --bandwidth 1.0 \
+  --max-boundary-separation 0.1 \
+  --ambiguity-tolerance 0.025
 ```
 
 Komenda zapisuje `combined_summary.csv`, `relative_boundary_crossings.csv`,
@@ -244,6 +246,11 @@ Plik `relative_boundary_level_status.csv` podaje dla każdego progu zakres
 wartości ilorazu, informację czy kontur istnieje oraz liczbę jego spójnych
 składowych. Próg leżący poniżej minimum danych jest jawnie oznaczony jako
 nieosiągnięty, a nie sztucznie dorysowywany.
+Różnica położenia granic jest liczona tylko dla jednoznacznych par przecięć
+oddalonych o nie więcej niż `max-boundary-separation`. Odległe lub konkurencyjne
+dopasowania są pomijane. Statystyki zaakceptowanych, odrzuconych i
+niejednoznacznych par oraz medianę i 90. percentyl separacji zapisuje
+`relative_boundary_separation_summary.csv`.
 
 ## Kruk / PBS
 
