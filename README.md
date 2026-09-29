@@ -111,6 +111,15 @@ PBS `0-(N-1)`. Jeden indeks odpowiada dokładnie jednemu punktowi spektralnemu
 `(U, disorder_full_width, branch)` przy half-fillingu. Każdy punkt ma osobny
 katalog, atomowy zapis i blokadę chroniącą przed dwoma jednoczesnymi writerami.
 
+Kilka punktów spektralnych można wykonać kolejno wewnątrz jednego zadania PBS.
+Konfiguracja dokładna ma 1550 punktów, ale poniższe polecenie grupuje je po
+cztery i wysyła tylko 388 zadań do kolejki:
+
+```bash
+BATCH_SIZE=4 PYTHON_EXECUTABLE="$PWD/.venv/bin/python" \
+bash jobs/submit_pbs_array.sh configs/byczuk_transport_refined.json
+```
+
 Po zakończeniu tablicy:
 
 ```bash
@@ -158,6 +167,7 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/pilot_half_filling.json` — pilot z notatki, w tym `U=0.3`, `Delta=1.8`;
 - `configs/production_half_filling.json` — gęstsza siatka produkcyjna;
 - `configs/byczuk_transport_coarse.json` — regularna mapa `(U/W, Delta/W)`;
+- `configs/byczuk_transport_refined.json` — mapa `25 x 31 x 2`, grupowana w 388 jobów;
 - `configs/pilot_doped.json` — `n_c=0.45, 0.40, 0.35, 0.30` z doborem `mu`.
 
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
