@@ -78,8 +78,9 @@ punkty jako `success`, `not_converged`, `noncausal`, `corrupt`, `missing` albo
 
 ### Mapa transportowa odpowiadająca diagramowi Byczuka
 
-Konfiguracja `configs/byczuk_transport_coarse.json` skanuje regularną siatkę
-`21 x 25 x 2 = 1050` niezależnych zadań `(U, Delta, branch)` przy half-fillingu.
+Konfiguracja `configs/byczuk_transport_coarse.json` skanuje siatkę
+`15 x 13 x 2 = 390` niezależnych zadań `(U, Delta, branch)` przy half-fillingu.
+Siatka jest gęstsza w małych `U`, aby zawierała punkt `U/W=0.5`.
 Po `merge` polecenie `plot` zapisuje nieinterpolowane mapy kolorów:
 
 - `transport_heatmap_sigma_T0.png` — `sigma(T -> 0) = tau(omega=0)` dla DMFT i TMT;
