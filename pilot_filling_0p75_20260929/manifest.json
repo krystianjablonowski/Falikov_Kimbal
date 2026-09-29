@@ -1,0 +1,555 @@
+{
+  "config_hash": "1bb4ffd90a39412892fbc7727f5eff0b0d2d3a1d77c503ae9b78cfb379226dd1",
+  "tasks": [
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 0,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 1,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 2,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 3,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 4,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 5,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 6,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 7,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 8,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 9,
+      "interaction": 0.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 10,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 11,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 12,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 13,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 14,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 15,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 16,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 17,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 18,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 19,
+      "interaction": 0.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 20,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 21,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 22,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 23,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 24,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 25,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 26,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 27,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 28,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 29,
+      "interaction": 1.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 30,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 31,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 32,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 33,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 34,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 35,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 36,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 37,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 38,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 39,
+      "interaction": 1.5,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 40,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.0,
+      "half_filling": false,
+      "index": 41,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 42,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 0.6,
+      "half_filling": false,
+      "index": 43,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 44,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.2,
+      "half_filling": false,
+      "index": 45,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 46,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 1.8,
+      "half_filling": false,
+      "index": 47,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "arith",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 48,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    },
+    {
+      "branch": "typ",
+      "disorder_full_width": 2.4,
+      "half_filling": false,
+      "index": 49,
+      "interaction": 2.0,
+      "target_filling": 0.75,
+      "temperatures": [
+        0.01
+      ]
+    }
+  ]
+}
