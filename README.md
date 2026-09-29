@@ -240,6 +240,10 @@ granic wyznaczonych z bezwymiarowych ilorazów `sigma_typ/sigma_arith` i
 `kappa_typ/kappa_arith`. Kilka progów jest celowe:
 stabilność linii względem progu pozwala odróżnić fizyczną granicę od arbitralnej
 definicji numerycznego zera.
+Plik `relative_boundary_level_status.csv` podaje dla każdego progu zakres
+wartości ilorazu, informację czy kontur istnieje oraz liczbę jego spójnych
+składowych. Próg leżący poniżej minimum danych jest jawnie oznaczony jako
+nieosiągnięty, a nie sztucznie dorysowywany.
 
 ## Kruk / PBS
 
