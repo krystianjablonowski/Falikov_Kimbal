@@ -208,6 +208,14 @@ def plot_all_temperature_summaries(
     rows = _read_rows(summary_path)
     output_directory = Path(output_directory) if output_directory else summary_path.parent
     output_directory.mkdir(parents=True, exist_ok=True)
+    # Remove the obsolete single-temperature overview so it cannot be mistaken
+    # for the complete set or republished alongside the temperature-tagged files.
+    for legacy in (
+        output_directory / "transport_summary.png",
+        output_directory / "transport_summary.pdf",
+    ):
+        if legacy.is_file():
+            legacy.unlink()
     outputs: list[Path] = []
     for filling in sorted({float(row["target_filling"]) for row in rows}):
         filling_tag = f"{filling:.6g}".replace(".", "p")
