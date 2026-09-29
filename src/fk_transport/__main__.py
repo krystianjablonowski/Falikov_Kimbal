@@ -8,6 +8,7 @@ from pathlib import Path
 from .config import load_config
 from .boundary_refinement import DEFAULT_FIELDS, generate_boundary_config
 from .boundary_analysis import analyze_boundaries
+from .convergence_scan import prepare_convergence_configs
 from .io import atomic_json
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
@@ -80,6 +81,15 @@ def _parser() -> argparse.ArgumentParser:
     analyze.add_argument("--bandwidth", type=float, default=1.0)
     analyze.add_argument("--max-boundary-separation", type=float, default=0.1)
     analyze.add_argument("--ambiguity-tolerance", type=float, default=0.025)
+    convergence = sub.add_parser("prepare-convergence")
+    convergence.add_argument("--config", required=True)
+    convergence.add_argument("--combined-summary", required=True)
+    convergence.add_argument("--boundary-differences", required=True)
+    convergence.add_argument("--output-prefix", required=True)
+    convergence.add_argument("--maximum-points", type=int, default=36)
+    convergence.add_argument("--neighbors", type=int, default=3)
+    convergence.add_argument("--temperatures", nargs="+", type=float, default=[0.005,0.01,0.03])
+    convergence.add_argument("--threshold", type=float, default=1e-2)
     return parser
 
 
@@ -140,6 +150,12 @@ def main(argv: list[str] | None = None) -> int:
                                      args.thresholds, args.bandwidth,
                                      args.max_boundary_separation, args.ambiguity_tolerance)
         print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "prepare-convergence":
+        report = prepare_convergence_configs(load_config(args.config), args.combined_summary,
+            args.boundary_differences, args.output_prefix, args.maximum_points, args.neighbors,
+            args.temperatures, args.threshold)
+        print(json.dumps(report, indent=2))
         return 0
 
     cfg = load_config(args.config)

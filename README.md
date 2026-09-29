@@ -252,6 +252,32 @@ dopasowania są pomijane. Statystyki zaakceptowanych, odrzuconych i
 niejednoznacznych par oraz medianę i 90. percentyl separacji zapisuje
 `relative_boundary_separation_summary.csv`.
 
+### Etap 3: test granicy `eta -> 0`
+
+Po ponownym wykonaniu `analyze-boundaries` generator wybiera punkty z dużą i
+małą separacją, a następnie dobiera istniejące punkty siatki po obu stronach
+konturu:
+
+```bash
+python -m fk_transport prepare-convergence \
+  --config configs/stage1_half_filling_refined.json \
+  --combined-summary results/stage2_boundaries/combined_summary.csv \
+  --boundary-differences results/stage2_boundaries/relative_boundary_differences.csv \
+  --output-prefix configs/stage3_convergence \
+  --maximum-points 36 --neighbors 3 \
+  --temperatures 0.005 0.01 0.03 \
+  --threshold 1e-2
+```
+
+Powstają trzy konfiguracje dla `(eta,n_omega)` równego `(5e-4,20001)`,
+`(2.5e-4,40001)` i `(1.25e-4,80001)`. Każda liczy te same punkty, więc zmianę
+wyniku można przypisać kontrolowanemu limitowi poszerzenia i rozdzielczości.
+Ze względu na koszt siatki `80001` należy użyć jednego punktu na job:
+
+```bash
+PYTHON_EXECUTABLE="$PWD/.venv/bin/python" bash jobs/submit_stage3_convergence.sh
+```
+
 ## Kruk / PBS
 
 Na klastrze skopiuj cały katalog `fk_transport`, utwórz środowisko Pythona i
