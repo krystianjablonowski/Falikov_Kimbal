@@ -9,6 +9,7 @@ from .config import load_config
 from .boundary_refinement import DEFAULT_FIELDS, generate_boundary_config
 from .boundary_analysis import analyze_boundaries
 from .convergence_scan import prepare_convergence_configs
+from .convergence_analysis import analyze_convergence
 from .io import atomic_json
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
@@ -90,6 +91,12 @@ def _parser() -> argparse.ArgumentParser:
     convergence.add_argument("--neighbors", type=int, default=3)
     convergence.add_argument("--temperatures", nargs="+", type=float, default=[0.005,0.01,0.03])
     convergence.add_argument("--threshold", type=float, default=1e-2)
+    analyze_convergence_parser = sub.add_parser("analyze-convergence")
+    analyze_convergence_parser.add_argument("--summaries", nargs="+", required=True)
+    analyze_convergence_parser.add_argument("--etas", nargs="+", type=float, required=True)
+    analyze_convergence_parser.add_argument("--output-directory", required=True)
+    analyze_convergence_parser.add_argument("--threshold", type=float, default=1e-2)
+    analyze_convergence_parser.add_argument("--max-boundary-separation", type=float, default=0.1)
     return parser
 
 
@@ -157,6 +164,9 @@ def main(argv: list[str] | None = None) -> int:
             args.temperatures, args.threshold)
         print(json.dumps(report, indent=2))
         return 0
+    if args.command == "analyze-convergence":
+        outputs=analyze_convergence(args.summaries,args.etas,args.output_directory,args.threshold,args.max_boundary_separation)
+        print(json.dumps([str(path) for path in outputs],indent=2));return 0
 
     cfg = load_config(args.config)
     if args.command == "validate":

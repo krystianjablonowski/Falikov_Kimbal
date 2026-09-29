@@ -278,6 +278,28 @@ Ze względu na koszt siatki `80001` należy użyć jednego punktu na job:
 PYTHON_EXECUTABLE="$PWD/.venv/bin/python" bash jobs/submit_stage3_convergence.sh
 ```
 
+Po ukończeniu należy dla każdej konfiguracji wykonać `status` i `merge`, a
+następnie porównać trzy podsumowania:
+
+```bash
+python -m fk_transport analyze-convergence \
+  --summaries \
+    results/stage3_convergence/eta_5e-4/summary.csv \
+    results/stage3_convergence/eta_2p5e-4/summary.csv \
+    results/stage3_convergence/eta_1p25e-4/summary.csv \
+  --etas 5e-4 2.5e-4 1.25e-4 \
+  --output-directory results/stage3_convergence/analysis \
+  --threshold 1e-2 --max-boundary-separation 0.1
+```
+
+Analizę publikuje niezależny skrypt:
+
+```bash
+SOURCE_DIRECTORY=results/stage3_convergence/analysis \
+RUN_LABEL=stage3_convergence_analysis RESULTS_BRANCH=results \
+bash jobs/publish_analysis_to_github.sh
+```
+
 ## Kruk / PBS
 
 Na klastrze skopiuj cały katalog `fk_transport`, utwórz środowisko Pythona i
