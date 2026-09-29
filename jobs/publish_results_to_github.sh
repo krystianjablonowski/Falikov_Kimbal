@@ -60,7 +60,6 @@ elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
     "${RESULT_ROOT}"/*_heatmap*.png \
     "${RESULT_ROOT}"/*boundary*.png \
     "${RESULT_ROOT}"/combined_summary.csv \
-    "${RESULT_ROOT}"/boundary_crossings.csv \
     "${RESULT_ROOT}"/relative_boundary_crossings.csv \
     "${RESULT_ROOT}"/relative_boundary_differences.csv \
     "${RESULT_ROOT}"/gradient_boundaries.csv \

@@ -71,7 +71,12 @@ def analyze_boundaries(coarse, refined, output_directory, thresholds=(1e-2,1e-4,
     import matplotlib.pyplot as plt
     if bandwidth <= 0 or any(t <= 0 or t >= 1 for t in thresholds):
         raise ValueError("bandwidth must be positive and relative thresholds must lie in (0,1)")
-    out=Path(output_directory); rows,combined=combine_summaries(coarse,refined,out/"combined_summary.csv")
+    out=Path(output_directory); out.mkdir(parents=True, exist_ok=True)
+    # Remove obsolete absolute-threshold products, which are not comparable
+    # between electrical and thermal conductivity.
+    for obsolete in [out/"boundary_crossings.csv", *out.glob("boundary_crossings_*.png"), *out.glob("boundary_crossings_*.pdf")]:
+        if obsolete.is_file(): obsolete.unlink()
+    rows,combined=combine_summaries(coarse,refined,out/"combined_summary.csv")
     outputs=[combined]; crossings=[]; differences=[]; gradients=[]
     colors=plt.get_cmap("viridis")(np.linspace(.12,.9,len(thresholds)))
     for filling in sorted({float(r["target_filling"]) for r in rows}):
