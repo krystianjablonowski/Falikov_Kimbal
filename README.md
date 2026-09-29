@@ -223,6 +223,23 @@ Jeśli `within_job_limit` jest fałszywe, należy użyć wartości wypisanej jak
 `minimum_batch_size_for_limit`. Zwiększa to liczbę punktów liczonych kolejno w
 jednym jobie, ale nie zmienia siatki ani wyników.
 
+Po ukończeniu i scaleniu etapu 2 oba zestawy analizuje się wspólnie:
+
+```bash
+python -m fk_transport analyze-boundaries \
+  --coarse results/stage1_half_filling_refined/summary.csv \
+  --refined results/stage2_boundaries/summary.csv \
+  --output-directory results/stage2_boundaries \
+  --thresholds 1e-4 1e-6 1e-8 \
+  --bandwidth 1.0
+```
+
+Komenda zapisuje `combined_summary.csv`, `boundary_crossings.csv`, adaptacyjne
+mapy triangulowane oraz wykresy położeń wszystkich przecięć progowych dla
+`sigma_typ` i `kappa_e_typ` w każdej temperaturze. Kilka progów jest celowe:
+stabilność linii względem progu pozwala odróżnić fizyczną granicę od arbitralnej
+definicji numerycznego zera.
+
 ## Kruk / PBS
 
 Na klastrze skopiuj cały katalog `fk_transport`, utwórz środowisko Pythona i

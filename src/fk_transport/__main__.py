@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .config import load_config
 from .boundary_refinement import DEFAULT_FIELDS, generate_boundary_config
+from .boundary_analysis import analyze_boundaries
 from .io import atomic_json
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
@@ -70,6 +71,12 @@ def _parser() -> argparse.ArgumentParser:
     refine.add_argument("--padding-cells", type=int, default=1)
     refine.add_argument("--batch-size", type=int, default=8)
     refine.add_argument("--max-jobs", type=int, default=399)
+    analyze = sub.add_parser("analyze-boundaries")
+    analyze.add_argument("--coarse", required=True)
+    analyze.add_argument("--refined", required=True)
+    analyze.add_argument("--output-directory", required=True)
+    analyze.add_argument("--thresholds", nargs="+", type=float, default=[1e-4, 1e-6, 1e-8])
+    analyze.add_argument("--bandwidth", type=float, default=1.0)
     return parser
 
 
@@ -124,6 +131,11 @@ def main(argv: list[str] | None = None) -> int:
             max_jobs=args.max_jobs,
         )
         print(json.dumps(report, indent=2))
+        return 0
+    if args.command == "analyze-boundaries":
+        outputs = analyze_boundaries(args.coarse, args.refined, args.output_directory,
+                                     args.thresholds, args.bandwidth)
+        print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
 
     cfg = load_config(args.config)
