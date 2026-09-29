@@ -16,6 +16,7 @@ export PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}"
 
 "${PYTHON_EXECUTABLE}" -m fk_transport status --config "${CONFIG}"
 "${PYTHON_EXECUTABLE}" -m fk_transport merge --config "${CONFIG}"
+"${PYTHON_EXECUTABLE}" -m fk_transport plot --config "${CONFIG}"
 
 RESULT_ROOT=$("${PYTHON_EXECUTABLE}" -c 'import sys; from fk_transport.config import load_config; from fk_transport.sweep import output_root; print(output_root(load_config(sys.argv[1])))' "${CONFIG}")
 PUBLISH_WORKTREE="${PWD}/.publish-results-${PBS_JOBID:-$$}"
