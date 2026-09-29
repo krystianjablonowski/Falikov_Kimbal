@@ -384,6 +384,18 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
   dla `n_c=0.4`, z `U/W` i `Delta/W` do `3`; 2856 zadań spektralnych,
   grupowanych po osiem w 357 jobów PBS.
 
+Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
+
+```bash
+python -m fk_transport analyze-filling \
+  --input results/stage4_filling_0p4_expanded/summary.csv \
+  --output-directory results/stage4_filling_0p4_expanded \
+  --bandwidth 1.0
+```
+
+Polecenie zapisuje względne zanikanie `typ/arith`, moc termoelektryczną,
+elektronowe `ZT` oraz wartości własne sprzężonej macierzy dyfuzji `D_-`, `D_+`.
+
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
 zbieżności. Tolerancję przyczynowości należy ustalić na podstawie kontroli
 dyskretyzacji; surowe maksimum `Im Sigma` jest zawsze zapisane w metadanych.

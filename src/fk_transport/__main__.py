@@ -10,6 +10,7 @@ from .boundary_refinement import DEFAULT_FIELDS, generate_boundary_config
 from .boundary_analysis import analyze_boundaries
 from .convergence_scan import prepare_convergence_configs
 from .convergence_analysis import analyze_convergence
+from .finite_filling_analysis import analyze_finite_filling
 from .io import atomic_json
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
@@ -97,6 +98,10 @@ def _parser() -> argparse.ArgumentParser:
     analyze_convergence_parser.add_argument("--output-directory", required=True)
     analyze_convergence_parser.add_argument("--threshold", type=float, default=1e-2)
     analyze_convergence_parser.add_argument("--max-boundary-separation", type=float, default=0.1)
+    finite_filling = sub.add_parser("analyze-filling")
+    finite_filling.add_argument("--input", required=True)
+    finite_filling.add_argument("--output-directory", required=True)
+    finite_filling.add_argument("--bandwidth", type=float, default=1.0)
     return parser
 
 
@@ -167,6 +172,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "analyze-convergence":
         outputs=analyze_convergence(args.summaries,args.etas,args.output_directory,args.threshold,args.max_boundary_separation)
         print(json.dumps([str(path) for path in outputs],indent=2));return 0
+    if args.command == "analyze-filling":
+        outputs = analyze_finite_filling(args.input, args.output_directory, args.bandwidth)
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
 
     cfg = load_config(args.config)
     if args.command == "validate":
