@@ -383,6 +383,9 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/stage4_filling_0p4_expanded.json` — rozszerzona siatka `17 x 21`
   dla `n_c=0.4`, z `U/W` i `Delta/W` do `3`; 2856 zadań spektralnych,
   grupowanych po osiem w 357 jobów PBS.
+- `configs/stage5_filling_0p3_dense.json` — gęsta siatka `25 x 25` dla
+  `n_c=0.3`, z `U/W` i `Delta/W` od `0` do `3` co `0.125`; 5000 zadań
+  spektralnych, grupowanych po dziesięć w 500 jobów PBS.
 
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
