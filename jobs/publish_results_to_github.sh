@@ -26,12 +26,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if git ls-remote --exit-code --heads origin "${RESULTS_BRANCH}" >/dev/null 2>&1; then
-  git fetch origin "${RESULTS_BRANCH}"
-  git worktree add -B "${RESULTS_BRANCH}" "${PUBLISH_WORKTREE}" "origin/${RESULTS_BRANCH}"
+git fetch origin "+refs/heads/${RESULTS_BRANCH}:refs/remotes/origin/${RESULTS_BRANCH}" || true
+if git show-ref --verify --quiet "refs/remotes/origin/${RESULTS_BRANCH}"; then
+  # A detached worktree avoids collisions with an existing local branch named
+  # like the publication branch. The final push explicitly updates the remote.
+  git worktree add --detach "${PUBLISH_WORKTREE}" "origin/${RESULTS_BRANCH}"
 else
   git worktree add --detach "${PUBLISH_WORKTREE}" HEAD
-  git -C "${PUBLISH_WORKTREE}" switch --orphan "${RESULTS_BRANCH}"
+  TEMPORARY_BRANCH="publish-${RESULTS_BRANCH}-${PBS_JOBID:-$$}"
+  git -C "${PUBLISH_WORKTREE}" switch --orphan "${TEMPORARY_BRANCH}"
   git -C "${PUBLISH_WORKTREE}" rm -rf . || true
 fi
 
@@ -87,4 +90,4 @@ if git -C "${PUBLISH_WORKTREE}" diff --cached --quiet; then
 fi
 
 git -C "${PUBLISH_WORKTREE}" commit -m "results: ${RUN_LABEL}"
-git -C "${PUBLISH_WORKTREE}" push origin "${RESULTS_BRANCH}"
+git -C "${PUBLISH_WORKTREE}" push origin "HEAD:${RESULTS_BRANCH}"
