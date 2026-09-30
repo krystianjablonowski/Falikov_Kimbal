@@ -402,6 +402,23 @@ python -m fk_transport analyze-filling \
 Polecenie zapisuje względne zanikanie `typ/arith`, moc termoelektryczną,
 elektronowe `ZT` oraz wartości własne sprzężonej macierzy dyfuzji `D_-`, `D_+`.
 
+Linie kompensacji termoelektrycznej `L12=0` można przeanalizować bez ponownego
+rozwiązywania DMFT:
+
+```bash
+python -m fk_transport analyze-compensation \
+  --input results/stage5_filling_0p3_dense/summary.csv \
+  --points-root results/stage5_filling_0p3_dense/points \
+  --output-directory results/stage5_filling_0p3_dense/compensation_analysis \
+  --bandwidth 1.0
+```
+
+Bez `--points-root` powstają kontury dla wszystkich temperatur, ich porównanie
+`arith`--`typ`, tabela sparowanych przecięć i miary odległości między liniami.
+Opcjonalny katalog punktów dodaje rozkład `L12` na wkłady z `omega<0` i
+`omega>0` oraz odległość L1 między znormalizowanymi rozkładami transportowymi
+obu średnich. Wyniki są zapisywane jako CSV oraz rysunki PNG/PDF.
+
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
 zbieżności. Tolerancję przyczynowości należy ustalić na podstawie kontroli
 dyskretyzacji; surowe maksimum `Im Sigma` jest zawsze zapisane w metadanych.

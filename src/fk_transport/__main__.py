@@ -20,6 +20,7 @@ from .temperature_analysis import (
     plot_temperature_scan,
     reweight_point,
 )
+from .thermopower_compensation import analyze_thermopower_compensation
 from .validation import run_validation
 
 
@@ -102,6 +103,14 @@ def _parser() -> argparse.ArgumentParser:
     finite_filling.add_argument("--input", required=True)
     finite_filling.add_argument("--output-directory", required=True)
     finite_filling.add_argument("--bandwidth", type=float, default=1.0)
+    compensation = sub.add_parser("analyze-compensation")
+    compensation.add_argument("--input", required=True)
+    compensation.add_argument("--output-directory", required=True)
+    compensation.add_argument("--bandwidth", type=float, default=1.0)
+    compensation.add_argument(
+        "--points-root",
+        help="optional points directory containing point_XXXXXX/solution.npz",
+    )
     return parser
 
 
@@ -174,6 +183,15 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([str(path) for path in outputs],indent=2));return 0
     if args.command == "analyze-filling":
         outputs = analyze_finite_filling(args.input, args.output_directory, args.bandwidth)
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "analyze-compensation":
+        outputs = analyze_thermopower_compensation(
+            args.input,
+            args.output_directory,
+            args.bandwidth,
+            args.points_root,
+        )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
 
