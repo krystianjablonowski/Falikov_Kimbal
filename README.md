@@ -389,6 +389,10 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/stage6_filling_0p2_dense.json` — taka sama gęsta siatka dla
   `n_c=0.2`, z rozszerzonym przedziałem bisekcji potencjału chemicznego;
   5000 zadań spektralnych, grupowanych po dziesięć w 500 jobów PBS.
+- `configs/stage7_filling_0p45_dense_multitemp.json` — siatka `25 x 25` dla
+  `n_c=0.45`, z `U/W` i `Delta/W` od `0` do `3` co `0.125` oraz temperaturami
+  `T/W=0.005, 0.01, 0.02, 0.05, 0.1, 0.5`; 7500 zadań spektralnych,
+  grupowanych po dziesięć w 750 jobów PBS.
 
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
