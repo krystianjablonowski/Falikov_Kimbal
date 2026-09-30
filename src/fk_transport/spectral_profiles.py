@@ -27,18 +27,34 @@ def _integral(values: np.ndarray, omega: np.ndarray) -> float:
 
 
 def _load_spectral_profile(
-    points_root: Path, index: int, branch: str, temperature: float
+    points_root: Path,
+    index: int,
+    branch: str,
+    temperature: float,
+    high_index: int | None = None,
+    alpha: float = 0.0,
 ) -> dict[str, np.ndarray | float]:
-    path = points_root / f"point_{index:06d}" / "solution.npz"
-    if not path.is_file():
-        raise FileNotFoundError(path)
     field = "rho_arith" if branch == "arith" else "rho_typ"
-    with np.load(path) as data:
-        missing = {"omega", field}.difference(data.files)
-        if missing:
-            raise KeyError(f"{path} does not contain {', '.join(sorted(missing))}")
-        omega = np.asarray(data["omega"], dtype=float)
-        rho = np.maximum(np.asarray(data[field], dtype=float), 0.0)
+
+    def load(point_index: int) -> tuple[np.ndarray, np.ndarray]:
+        path = points_root / f"point_{point_index:06d}" / "solution.npz"
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        with np.load(path) as data:
+            missing = {"omega", field}.difference(data.files)
+            if missing:
+                raise KeyError(f"{path} does not contain {', '.join(sorted(missing))}")
+            return (
+                np.asarray(data["omega"], dtype=float),
+                np.maximum(np.asarray(data[field], dtype=float), 0.0),
+            )
+
+    omega, rho = load(index)
+    if high_index is not None and high_index != index and alpha > 0.0:
+        omega_high, rho_high = load(high_index)
+        if not np.array_equal(omega, omega_high):
+            rho_high = np.interp(omega, omega_high, rho_high)
+        rho = (1.0 - alpha) * rho + alpha * rho_high
 
     weight = minus_fermi_derivative(omega, temperature)
     density = weight * rho
@@ -92,7 +108,10 @@ def _plot_group(
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    order = ("metallic", "max_abs_S_typ", "compensation", "localized_edge")
+    order = (
+        "metallic", "max_abs_S_typ", "compensation_arith",
+        "compensation_typ", "localized_edge",
+    )
     by_kind = {str(row["selection"]): row for row in selections}
     chosen = [by_kind[kind] for kind in order if kind in by_kind]
     temperature = float(chosen[0]["temperature"])
@@ -103,7 +122,8 @@ def _plot_group(
     labels = {
         "metallic": "metallic side",
         "max_abs_S_typ": r"maximum $|S_{\rm typ}|$",
-        "compensation": r"near $L_{12}=0$",
+        "compensation_arith": r"$L_{12}^{\rm arith}=0$",
+        "compensation_typ": r"$L_{12}^{\rm typ}=0$",
         "localized_edge": "localized edge",
     }
     diagnostics: list[dict[str, float | int | str]] = []
@@ -113,7 +133,12 @@ def _plot_group(
             loaded: dict[str, dict[str, np.ndarray | float]] = {}
             for branch in ("arith", "typ"):
                 profile = _load_spectral_profile(
-                    points_root, int(row[f"point_index_{branch}"]), branch, temperature
+                    points_root,
+                    int(row[f"point_index_{branch}_low"]),
+                    branch,
+                    temperature,
+                    int(row[f"point_index_{branch}_high"]),
+                    float(row["interpolation_alpha"]),
                 )
                 loaded[branch] = profile
                 omega = np.asarray(profile["omega"])
@@ -157,12 +182,12 @@ def _plot_group(
             for axis in axes[:, column]:
                 axis.axvline(0.0, color="0.35", linewidth=0.7, linestyle=":")
                 axis.tick_params(which="both", direction="in", top=True, right=True)
-            axes[0, column].set_title(
-                labels[str(row["selection"])]
-                + "\n"
-                + rf"$\Delta/W={float(row['disorder_over_W']):g}$, "
-                + rf"$S_{{\rm typ}}={float(row['S_typ']):.2g}$"
-            )
+            title = labels[str(row["selection"])] + "\n" + rf"$\Delta/W={float(row['disorder_over_W']):g}$"
+            if str(row["selection"]).startswith("compensation"):
+                title += rf", $S_a={float(row['S_arith']):.2g}$, $S_t={float(row['S_typ']):.2g}$"
+            else:
+                title += rf", $S_{{\rm typ}}={float(row['S_typ']):.2g}$"
+            axes[0, column].set_title(title)
             axes[3, column].set_xlabel(r"energy $\omega/W$")
         axes[0, 0].set_ylabel(r"spectral DOS $\rho(\omega)$")
         axes[1, 0].set_ylabel(r"$Q_\rho=(-f')\rho/\!\int(-f')\rho$")

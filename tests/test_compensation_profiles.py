@@ -40,12 +40,24 @@ def _rows() -> list[dict[str, str]]:
 
 
 class CompensationProfileTests(unittest.TestCase):
-    def test_selects_four_physical_regimes(self) -> None:
+    def test_selects_separate_interpolated_compensation_points(self) -> None:
         selected = select_profile_points(_rows(), [1.0])
         self.assertEqual(
             {row["selection"] for row in selected},
-            {"metallic", "max_abs_S_typ", "compensation", "localized_edge"},
+            {
+                "metallic", "max_abs_S_typ", "compensation_arith",
+                "compensation_typ", "localized_edge",
+            },
         )
+        by_kind = {row["selection"]: row for row in selected}
+        arithmetic = by_kind["compensation_arith"]
+        typical = by_kind["compensation_typ"]
+        self.assertAlmostEqual(float(arithmetic["disorder_full_width"]), 0.75)
+        self.assertAlmostEqual(float(arithmetic["L12_arith"]), 0.0)
+        self.assertAlmostEqual(float(typical["disorder_full_width"]), 0.80)
+        self.assertAlmostEqual(float(typical["L12_typ"]), 0.0)
+        self.assertEqual(arithmetic["point_index_arith_low"], 1)
+        self.assertEqual(arithmetic["point_index_arith_high"], 2)
 
     def test_renders_profiles_from_saved_tau(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

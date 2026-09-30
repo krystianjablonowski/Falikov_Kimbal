@@ -30,6 +30,69 @@ def _nearest_row(rows: list[dict[str, str]], disorder: float) -> dict[str, str]:
     return min(rows, key=lambda row: abs(_number(row, "disorder_full_width") - disorder))
 
 
+def _bracket(
+    candidates: list[tuple[float, dict, dict, float]], target: float
+) -> tuple[tuple[float, dict, dict, float], tuple[float, dict, dict, float], float]:
+    """Return adjacent common-grid points and the linear weight at target."""
+    ordered = sorted(candidates, key=lambda item: item[0])
+    lower = max((item for item in ordered if item[0] <= target), default=ordered[0], key=lambda item: item[0])
+    upper = min((item for item in ordered if item[0] >= target), default=ordered[-1], key=lambda item: item[0])
+    span = upper[0] - lower[0]
+    alpha = 0.0 if span == 0.0 else (target - lower[0]) / span
+    return lower, upper, float(np.clip(alpha, 0.0, 1.0))
+
+
+def _interpolated_selection(
+    kind: str,
+    target: float,
+    candidates: list[tuple[float, dict, dict, float]],
+    filling: float,
+    temperature: float,
+    interaction: float,
+    bandwidth: float,
+) -> dict[str, float | int | str]:
+    low, high, alpha = _bracket(candidates, target)
+
+    def blend(branch_index: int, field: str) -> float:
+        return (1.0 - alpha) * _number(low[branch_index], field) + alpha * _number(
+            high[branch_index], field
+        )
+
+    sigma_arith = blend(1, "sigma")
+    sigma_typ = blend(2, "sigma")
+    l12_arith = blend(1, "L12")
+    l12_typ = blend(2, "L12")
+    s_arith = -l12_arith / (temperature * sigma_arith) if sigma_arith > 0.0 else float("nan")
+    s_typ = -l12_typ / (temperature * sigma_typ) if sigma_typ > 0.0 else float("nan")
+    nearest = low if alpha <= 0.5 else high
+    return {
+        "selection": kind,
+        "target_filling": filling,
+        "temperature": temperature,
+        "temperature_over_W": temperature / bandwidth,
+        "interaction": interaction,
+        "interaction_over_W": interaction / bandwidth,
+        "disorder_full_width": target,
+        "disorder_over_W": target / bandwidth,
+        "interpolation_disorder_low": low[0],
+        "interpolation_disorder_high": high[0],
+        "interpolation_alpha": alpha,
+        "sigma_arith": sigma_arith,
+        "sigma_typ": sigma_typ,
+        "sigma_typ_over_arith": sigma_typ / sigma_arith if sigma_arith > 0.0 else float("nan"),
+        "S_arith": s_arith,
+        "S_typ": s_typ,
+        "L12_arith": l12_arith,
+        "L12_typ": l12_typ,
+        "point_index_arith": int(_number(nearest[1], "index")),
+        "point_index_typ": int(_number(nearest[2], "index")),
+        "point_index_arith_low": int(_number(low[1], "index")),
+        "point_index_arith_high": int(_number(high[1], "index")),
+        "point_index_typ_low": int(_number(low[2], "index")),
+        "point_index_typ_high": int(_number(high[2], "index")),
+    }
+
+
 def select_profile_points(
     rows: list[dict[str, str]],
     interactions: list[float],
@@ -87,58 +150,59 @@ def select_profile_points(
                 finite_ratio = [item for item in candidates if np.isfinite(item[3]) and item[3] > 0.0]
                 if not finite_ratio:
                     continue
-                choices: list[tuple[str, tuple[float, dict, dict, float]]] = []
+                choices: list[tuple[str, float]] = []
                 choices.append(("metallic", min(
                     finite_ratio, key=lambda item: abs(np.log10(item[3] / metal_ratio))
-                )))
+                )[0]))
                 reliable = [item for item in candidates if _number(item[2], "sigma") >= sigma_floor]
                 if reliable:
                     choices.append(("max_abs_S_typ", max(
                         reliable, key=lambda item: abs(_number(item[2], "thermopower"))
-                    )))
+                    )[0]))
                 crossing = crossing_lookup.get((filling, temperature, interaction))
                 if crossing is not None:
-                    midpoint = 0.5 * (
-                        float(crossing["disorder_arith"]) + float(crossing["disorder_typ"])
+                    choices.extend(
+                        [
+                            ("compensation_arith", float(crossing["disorder_arith"])),
+                            ("compensation_typ", float(crossing["disorder_typ"])),
+                        ]
                     )
-                    choices.append(("compensation", min(
-                        candidates, key=lambda item: abs(item[0] - midpoint)
-                    )))
                 choices.append(("localized_edge", min(
                     finite_ratio, key=lambda item: abs(np.log10(item[3] / edge_ratio))
-                )))
-                for kind, (disorder, arith, typ, ratio) in choices:
+                )[0]))
+                for kind, disorder in choices:
                     selected.append(
-                        {
-                            "selection": kind,
-                            "target_filling": filling,
-                            "temperature": temperature,
-                            "temperature_over_W": temperature / bandwidth,
-                            "interaction": interaction,
-                            "interaction_over_W": interaction / bandwidth,
-                            "disorder_full_width": disorder,
-                            "disorder_over_W": disorder / bandwidth,
-                            "sigma_arith": _number(arith, "sigma"),
-                            "sigma_typ": _number(typ, "sigma"),
-                            "sigma_typ_over_arith": ratio,
-                            "S_arith": _number(arith, "thermopower"),
-                            "S_typ": _number(typ, "thermopower"),
-                            "L12_arith": _number(arith, "L12"),
-                            "L12_typ": _number(typ, "L12"),
-                            "point_index_arith": int(_number(arith, "index")),
-                            "point_index_typ": int(_number(typ, "index")),
-                        }
+                        _interpolated_selection(
+                            kind, disorder, candidates, filling, temperature,
+                            interaction, bandwidth,
+                        )
                     )
     return selected
 
 
-def _load_profile(points_root: Path, index: int, temperature: float) -> dict[str, np.ndarray | float]:
-    path = points_root / f"point_{index:06d}" / "solution.npz"
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    with np.load(path) as data:
-        omega = np.asarray(data["omega"], dtype=float)
-        tau = np.maximum(np.asarray(data["tau"], dtype=float), 0.0)
+def _load_profile(
+    points_root: Path,
+    index: int,
+    temperature: float,
+    high_index: int | None = None,
+    alpha: float = 0.0,
+) -> dict[str, np.ndarray | float]:
+    def load(point_index: int) -> tuple[np.ndarray, np.ndarray]:
+        path = points_root / f"point_{point_index:06d}" / "solution.npz"
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        with np.load(path) as data:
+            return (
+                np.asarray(data["omega"], dtype=float),
+                np.maximum(np.asarray(data["tau"], dtype=float), 0.0),
+            )
+
+    omega, tau = load(index)
+    if high_index is not None and high_index != index and alpha > 0.0:
+        omega_high, tau_high = load(high_index)
+        if not np.array_equal(omega, omega_high):
+            tau_high = np.interp(omega, omega_high, tau_high)
+        tau = (1.0 - alpha) * tau + alpha * tau_high
     weight = minus_fermi_derivative(omega, temperature)
     density = weight * tau
     l11 = float(np.trapz(density, omega))
@@ -169,7 +233,10 @@ def _plot_group(
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    order = ("metallic", "max_abs_S_typ", "compensation", "localized_edge")
+    order = (
+        "metallic", "max_abs_S_typ", "compensation_arith",
+        "compensation_typ", "localized_edge",
+    )
     by_kind = {str(row["selection"]): row for row in selections}
     chosen = [by_kind[kind] for kind in order if kind in by_kind]
     temperature = float(chosen[0]["temperature"])
@@ -180,7 +247,8 @@ def _plot_group(
     labels = {
         "metallic": "metallic side",
         "max_abs_S_typ": r"maximum $|S_{\rm typ}|$",
-        "compensation": r"near $L_{12}=0$",
+        "compensation_arith": r"$L_{12}^{\rm arith}=0$",
+        "compensation_typ": r"$L_{12}^{\rm typ}=0$",
         "localized_edge": "localized edge",
     }
     with plt.rc_context(_publication_style()):
@@ -188,7 +256,11 @@ def _plot_group(
         for column, row in enumerate(chosen):
             for branch in ("arith", "typ"):
                 profile = _load_profile(
-                    points_root, int(row[f"point_index_{branch}"]), temperature
+                    points_root,
+                    int(row[f"point_index_{branch}_low"]),
+                    temperature,
+                    int(row[f"point_index_{branch}_high"]),
+                    float(row["interpolation_alpha"]),
                 )
                 omega = profile["omega"]
                 mask = np.abs(omega) <= window
@@ -208,12 +280,12 @@ def _plot_group(
             for axis in axes[:, column]:
                 axis.axvline(0.0, color="0.35", linewidth=0.7, linestyle=":")
                 axis.tick_params(which="both", direction="in", top=True, right=True)
-            axes[0, column].set_title(
-                labels[str(row["selection"])]
-                + "\n"
-                + rf"$\Delta/W={float(row['disorder_over_W']):g}$, "
-                + rf"$S_{{\rm typ}}={float(row['S_typ']):.2g}$"
-            )
+            title = labels[str(row["selection"])] + "\n" + rf"$\Delta/W={float(row['disorder_over_W']):g}$"
+            if str(row["selection"]).startswith("compensation"):
+                title += rf", $S_a={float(row['S_arith']):.2g}$, $S_t={float(row['S_typ']):.2g}$"
+            else:
+                title += rf", $S_{{\rm typ}}={float(row['S_typ']):.2g}$"
+            axes[0, column].set_title(title)
             axes[3, column].set_xlabel(r"energy $\omega/W$")
         axes[0, 0].set_ylabel(r"$\tau(\omega)$")
         axes[1, 0].set_ylabel(r"$P(\omega)$")
