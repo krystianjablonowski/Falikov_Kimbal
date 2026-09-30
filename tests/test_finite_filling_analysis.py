@@ -5,7 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fk_transport.finite_filling_analysis import derive_finite_filling_rows
+from fk_transport.finite_filling_analysis import (
+    _plot_thermopower_zero_crossing_maps,
+    derive_finite_filling_rows,
+)
 
 
 class FiniteFillingAnalysisTests(unittest.TestCase):
@@ -47,6 +50,30 @@ class FiniteFillingAnalysisTests(unittest.TestCase):
             self.assertAlmostEqual(float(typical["zt_electronic"]), 0.09)
             self.assertAlmostEqual(float(typical["coupled_diffusivity_minus"]), 0.2)
             self.assertAlmostEqual(float(typical["coupled_diffusivity_plus"]), 0.2)
+
+    def test_plots_signed_thermopower_and_l12_with_zero_crossings(self) -> None:
+        rows = []
+        for branch, factor in (("arith", 1.0), ("typ", 0.1)):
+            for interaction in (0.0, 1.0):
+                for disorder in (0.0, 1.0):
+                    signed_value = factor * (disorder - interaction + 0.25)
+                    rows.append(
+                        {
+                            "branch": branch,
+                            "target_filling": "0.3",
+                            "temperature": "0.01",
+                            "interaction": str(interaction),
+                            "disorder_full_width": str(disorder),
+                            "thermopower": str(signed_value),
+                            "L12": str(0.01 * signed_value),
+                        }
+                    )
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "zero_crossings.png"
+            result = _plot_thermopower_zero_crossing_maps(rows, 0.3, 0.01, output)
+            self.assertEqual(result, output)
+            self.assertTrue(output.is_file())
+            self.assertTrue(output.with_suffix(".pdf").is_file())
 
 
 if __name__ == "__main__":

@@ -5,7 +5,15 @@ from pathlib import Path
 
 import numpy as np
 
-from .plotting import _draw_map, _grid, _log_norm, _publication_style, _save_publication_figure
+from .plotting import (
+    _draw_map,
+    _grid,
+    _log_norm,
+    _publication_style,
+    _save_publication_figure,
+    _signed_colormap,
+    _signed_norm,
+)
 
 
 def _number(row: dict[str, str], field: str) -> float:
@@ -193,6 +201,81 @@ def _plot_relative_maps(
     return output
 
 
+def _plot_thermopower_zero_crossing_maps(
+    rows: list[dict[str, str]], filling: float, temperature: float, output: Path
+) -> Path:
+    """Plot signed thermoelectric moments and mark their zero crossings."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    branches = ("arith", "typ")
+    fields = (("thermopower", r"$S$"), ("L12", r"$L_{12}$"))
+    grids = {
+        field: [
+            _grid(rows, branch, temperature, filling, field, positive_only=False)
+            for branch in branches
+        ]
+        for field, _ in fields
+    }
+    norms = {
+        field: _signed_norm([grid[2] for grid in field_grids])
+        for field, field_grids in grids.items()
+    }
+    colormap = _signed_colormap()
+    with plt.rc_context(_publication_style()):
+        fig = plt.figure(figsize=(7.8, 5.5))
+        spec = fig.add_gridspec(
+            2, 3, width_ratios=(1.0, 1.0, 0.045), wspace=0.24, hspace=0.28
+        )
+        panel = 0
+        for row_index, (field, symbol) in enumerate(fields):
+            image = None
+            for column, branch in enumerate(branches):
+                axis = fig.add_subplot(spec[row_index, column])
+                x, y, values = grids[field][column]
+                image = _draw_map(
+                    axis,
+                    x,
+                    y,
+                    values,
+                    rf"{branch}, $n_c={filling:g}$, $T/W={temperature:g}$",
+                    norms[field],
+                    cmap=colormap,
+                )
+                finite = values[np.isfinite(values)]
+                if finite.size and float(finite.min()) < 0.0 < float(finite.max()):
+                    axis.contour(
+                        x,
+                        y,
+                        np.ma.masked_invalid(values),
+                        levels=[0.0],
+                        colors="white",
+                        linewidths=1.0,
+                    )
+                if column == 1:
+                    axis.set_ylabel("")
+                    axis.tick_params(labelleft=False)
+                axis.text(
+                    0.03,
+                    0.93,
+                    f"({chr(97 + panel)})",
+                    transform=axis.transAxes,
+                    fontweight="bold",
+                    va="top",
+                )
+                panel += 1
+            color_axis = fig.add_subplot(spec[row_index, 2])
+            if image is None:
+                color_axis.set_visible(False)
+            else:
+                fig.colorbar(image, cax=color_axis, label=symbol)
+        fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
+        _save_publication_figure(fig, output)
+        plt.close(fig)
+    return output
+
+
 def analyze_finite_filling(
     summary_path: str | Path,
     output_directory: str | Path,
@@ -221,6 +304,10 @@ def analyze_finite_filling(
                 rows, filling, temperature_dimensional,
                 (("power_factor", r"$S^2\sigma$"), ("zt_electronic", r"$ZT_{\rm el}$")),
                 output / f"thermoelectric_performance_heatmaps_n_{filling_tag}_T_{temperature_tag}.png",
+            ))
+            outputs.append(_plot_thermopower_zero_crossing_maps(
+                rows, filling, temperature_dimensional,
+                output / f"thermopower_zero_crossings_n_{filling_tag}_T_{temperature_tag}.png",
             ))
             outputs.append(_plot_four_maps(
                 rows, filling, temperature_dimensional,
