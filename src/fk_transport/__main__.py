@@ -13,6 +13,7 @@ from .convergence_scan import prepare_convergence_configs
 from .convergence_analysis import analyze_convergence
 from .finite_filling_analysis import analyze_finite_filling
 from .io import atomic_json
+from .mechanism_analysis import analyze_transport_mechanism
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .spectral_profiles import plot_spectral_profiles
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
@@ -133,6 +134,13 @@ def _parser() -> argparse.ArgumentParser:
     spectral_profiles.add_argument("--edge-ratio", type=float, default=1.0e-4)
     spectral_profiles.add_argument("--sigma-floor", type=float, default=1.0e-8)
     spectral_profiles.add_argument("--omega-window", type=float)
+    mechanism = sub.add_parser("analyze-mechanism")
+    mechanism.add_argument("--summaries", nargs="+", required=True)
+    mechanism.add_argument("--points-roots", nargs="+", required=True)
+    mechanism.add_argument("--output-directory", required=True)
+    mechanism.add_argument("--interactions", nargs="+", type=float, default=[1.0, 1.25, 1.5])
+    mechanism.add_argument("--sigma-floors", nargs="+", type=float, default=[1.0e-6, 1.0e-8, 1.0e-10])
+    mechanism.add_argument("--bandwidth", type=float, default=1.0)
     return parser
 
 
@@ -241,6 +249,17 @@ def main(argv: list[str] | None = None) -> int:
             args.edge_ratio,
             args.sigma_floor,
             args.omega_window,
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "analyze-mechanism":
+        outputs = analyze_transport_mechanism(
+            args.summaries,
+            args.points_roots,
+            args.output_directory,
+            args.interactions,
+            args.sigma_floors,
+            args.bandwidth,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
