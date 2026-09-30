@@ -29,8 +29,11 @@ def _grid(
         and np.isclose(float(row["temperature"]), temperature, rtol=0.0, atol=1e-12)
         and np.isclose(float(row["target_filling"]), filling, rtol=0.0, atol=1e-12)
     ]
-    interactions = np.array(sorted({float(row["interaction"]) for row in rows}))
-    disorders = np.array(sorted({float(row["disorder_full_width"]) for row in rows}))
+    # Different fillings or calculation stages may use different parameter grids.
+    # Building axes from all rows inserts artificial missing cells between adjacent
+    # points of the selected dataset and can hide genuine zero crossings.
+    interactions = np.array(sorted({float(row["interaction"]) for row in selected}))
+    disorders = np.array(sorted({float(row["disorder_full_width"]) for row in selected}))
     values = np.full((interactions.size, disorders.size), np.nan)
     u_index = {value: index for index, value in enumerate(interactions)}
     d_index = {value: index for index, value in enumerate(disorders)}
