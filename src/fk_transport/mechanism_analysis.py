@@ -30,9 +30,9 @@ def _tag(value: float) -> str:
     return f"{value:.6g}".replace(".", "p")
 
 
-def _load_moments(
-    points_root: Path, index: int, branch: str, temperature: float
-) -> dict[str, float]:
+def _load_arrays(
+    points_root: Path, index: int, branch: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     path = points_root / f"point_{index:06d}" / "solution.npz"
     if not path.is_file():
         raise FileNotFoundError(path)
@@ -45,6 +45,12 @@ def _load_moments(
         omega = np.asarray(data["omega"], dtype=float)
         tau = np.maximum(np.asarray(data["tau"], dtype=float), 0.0)
         rho = np.maximum(np.asarray(data[spectral_field], dtype=float), 0.0)
+    return omega, tau, rho
+
+
+def _moments_from_arrays(
+    omega: np.ndarray, tau: np.ndarray, rho: np.ndarray, temperature: float
+) -> dict[str, float]:
     weight = minus_fermi_derivative(omega, temperature)
     transport_weight = _integral(weight * tau, omega)
     transport_moment = _integral(weight * omega * tau, omega)
@@ -63,7 +69,9 @@ def _load_moments(
 
 
 def calculate_mechanism_diagnostics(
-    summary_paths: list[str | Path], points_roots: list[str | Path]
+    summary_paths: list[str | Path],
+    points_roots: list[str | Path],
+    temperatures: list[float] | None = None,
 ) -> tuple[list[dict[str, float | int | str]], list[dict[str, str]]]:
     if len(summary_paths) != len(points_roots):
         raise ValueError("--summaries and --points-roots must contain the same number of paths")
@@ -73,36 +81,45 @@ def calculate_mechanism_diagnostics(
         zip(summary_paths, points_roots)
     ):
         rows = _read_rows(summary_path)
+        if temperatures:
+            rows = [
+                row for row in rows
+                if any(np.isclose(_number(row, "temperature"), value) for value in temperatures)
+            ]
+        if not rows:
+            continue
         all_summary_rows.extend(rows)
         points_root = Path(points_root_value)
+        by_point: dict[tuple[int, str], list[dict[str, str]]] = defaultdict(list)
         for row in rows:
-            branch = row["branch"]
-            temperature = _number(row, "temperature")
-            moments = _load_moments(
-                points_root, int(_number(row, "index")), branch, temperature
-            )
-            sigma = _number(row, "sigma")
-            thermopower = _number(row, "thermopower")
-            diagnostics.append(
-                {
-                    "dataset_index": dataset_index,
-                    "summary_path": str(summary_path),
-                    "points_root": str(points_root),
-                    "index": int(_number(row, "index")),
-                    "branch": branch,
-                    "target_filling": _number(row, "target_filling"),
-                    "temperature": temperature,
-                    "interaction": _number(row, "interaction"),
-                    "disorder_full_width": _number(row, "disorder_full_width"),
-                    "sigma": sigma,
-                    "thermopower": thermopower,
-                    "L12": _number(row, "L12"),
-                    "power_factor": thermopower**2 * sigma,
-                    **moments,
-                    "spectral_centroid_over_T": moments["spectral_centroid"] / temperature,
-                    "transport_centroid_over_T": moments["transport_centroid"] / temperature,
-                }
-            )
+            by_point[(int(_number(row, "index")), row["branch"])].append(row)
+        for (index, branch), point_rows in by_point.items():
+            omega, tau, rho = _load_arrays(points_root, index, branch)
+            for row in point_rows:
+                temperature = _number(row, "temperature")
+                moments = _moments_from_arrays(omega, tau, rho, temperature)
+                sigma = _number(row, "sigma")
+                thermopower = _number(row, "thermopower")
+                diagnostics.append(
+                    {
+                        "dataset_index": dataset_index,
+                        "summary_path": str(summary_path),
+                        "points_root": str(points_root),
+                        "index": index,
+                        "branch": branch,
+                        "target_filling": _number(row, "target_filling"),
+                        "temperature": temperature,
+                        "interaction": _number(row, "interaction"),
+                        "disorder_full_width": _number(row, "disorder_full_width"),
+                        "sigma": sigma,
+                        "thermopower": thermopower,
+                        "L12": _number(row, "L12"),
+                        "power_factor": thermopower**2 * sigma,
+                        **moments,
+                        "spectral_centroid_over_T": moments["spectral_centroid"] / temperature,
+                        "transport_centroid_over_T": moments["transport_centroid"] / temperature,
+                    }
+                )
     lookup: dict[tuple[float, float, float, float], dict[str, dict]] = defaultdict(dict)
     for row in diagnostics:
         key = tuple(
@@ -380,12 +397,18 @@ def analyze_transport_mechanism(
     interactions: list[float],
     sigma_floors: list[float],
     bandwidth: float = 1.0,
+    temperatures: list[float] | None = None,
+    skip_linecuts: bool = False,
 ) -> list[Path]:
     if bandwidth <= 0.0:
         raise ValueError("bandwidth must be positive")
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
-    diagnostics, summary_rows = calculate_mechanism_diagnostics(summary_paths, points_roots)
+    diagnostics, summary_rows = calculate_mechanism_diagnostics(
+        summary_paths, points_roots, temperatures
+    )
+    if not diagnostics:
+        raise ValueError("no rows match the requested datasets and temperatures")
     reliability = _reliability_summary(diagnostics, sigma_floors)
     outputs = [
         _write_rows(output / "mechanism_diagnostics.csv", diagnostics),
@@ -393,6 +416,7 @@ def analyze_transport_mechanism(
     ]
     outputs.extend(_plot_centroid_correlations(diagnostics, output))
     outputs.extend(_plot_contours_by_filling(summary_rows, output, bandwidth))
-    outputs.extend(_plot_linecuts(diagnostics, output, interactions, bandwidth))
+    if not skip_linecuts:
+        outputs.extend(_plot_linecuts(diagnostics, output, interactions, bandwidth))
     outputs.extend(_plot_reliability(reliability, output))
     return outputs

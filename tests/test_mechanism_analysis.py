@@ -69,6 +69,44 @@ def test_reliability_threshold_changes_maximum():
     assert by_floor[1.0e-10]["max_power_factor_typ"] == 4.0e-5
 
 
+def test_temperature_filter_avoids_unrequested_rows(tmp_path: Path):
+    summary = tmp_path / "summary.csv"
+    points = tmp_path / "points"
+    fields = [
+        "index", "branch", "target_filling", "temperature", "interaction",
+        "disorder_full_width", "sigma", "thermopower", "L12",
+    ]
+    rows = []
+    omega = np.linspace(-0.5, 0.5, 101)
+    for index, branch in enumerate(("arith", "typ")):
+        point = points / f"point_{index:06d}"
+        point.mkdir(parents=True)
+        curve = np.exp(-omega**2 / 0.02)
+        np.savez_compressed(
+            point / "solution.npz", omega=omega, tau=curve,
+            rho_arith=curve, rho_typ=curve,
+        )
+        for temperature in (0.02, 0.05):
+            rows.append(
+                {
+                    "index": index, "branch": branch, "target_filling": 0.4,
+                    "temperature": temperature, "interaction": 1.0,
+                    "disorder_full_width": 1.0, "sigma": 0.01,
+                    "thermopower": 0.0, "L12": 0.0,
+                }
+            )
+    with summary.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+    diagnostics, filtered = calculate_mechanism_diagnostics(
+        [summary], [points], [0.05]
+    )
+    assert len(diagnostics) == 2
+    assert len(filtered) == 2
+    assert all(np.isclose(float(row["temperature"]), 0.05) for row in diagnostics)
+
+
 def test_full_mechanism_analysis_writes_tables_and_figures(tmp_path: Path):
     summary = tmp_path / "summary.csv"
     points = tmp_path / "points"

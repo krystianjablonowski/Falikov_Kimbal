@@ -141,6 +141,8 @@ def _parser() -> argparse.ArgumentParser:
     mechanism.add_argument("--interactions", nargs="+", type=float, default=[1.0, 1.25, 1.5])
     mechanism.add_argument("--sigma-floors", nargs="+", type=float, default=[1.0e-6, 1.0e-8, 1.0e-10])
     mechanism.add_argument("--bandwidth", type=float, default=1.0)
+    mechanism.add_argument("--temperatures", nargs="+", type=float)
+    mechanism.add_argument("--skip-linecuts", action="store_true")
     return parser
 
 
@@ -260,6 +262,8 @@ def main(argv: list[str] | None = None) -> int:
             args.interactions,
             args.sigma_floors,
             args.bandwidth,
+            args.temperatures,
+            args.skip_linecuts,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
