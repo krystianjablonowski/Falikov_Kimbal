@@ -419,6 +419,24 @@ Opcjonalny katalog punktów dodaje rozkład `L12` na wkłady z `omega<0` i
 `omega>0` oraz odległość L1 między znormalizowanymi rozkładami transportowymi
 obu średnich. Wyniki są zapisywane jako CSV oraz rysunki PNG/PDF.
 
+Profile funkcji transportowej w automatycznie wybranych punktach (strona
+metaliczna, maksimum `|S_typ|`, linia kompensacji i krawędź lokalizacji):
+
+```bash
+python -m fk_transport plot-compensation-profiles \
+  --input results/stage5_filling_0p3_dense/summary.csv \
+  --points-root results/stage5_filling_0p3_dense/points \
+  --output-directory results/stage5_filling_0p3_dense/compensation_profiles \
+  --interactions 1.0 1.125 1.25 \
+  --edge-ratio 1e-4 \
+  --bandwidth 1.0
+```
+
+Każda plansza zestawia `tau(omega)`, znormalizowany rozkład transportowy,
+całkę pod `L12` i jej skumulowaną kompensację dla średniej arytmetycznej i
+typowej. Plik `compensation_profile_points.csv` dokumentuje automatyczny wybór
+punktów, ich indeksy, `S`, `L12`, przewodności i stosunek `sigma_typ/sigma_arith`.
+
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
 zbieżności. Tolerancję przyczynowości należy ustalić na podstawie kontroli
 dyskretyzacji; surowe maksimum `Im Sigma` jest zawsze zapisane w metadanych.

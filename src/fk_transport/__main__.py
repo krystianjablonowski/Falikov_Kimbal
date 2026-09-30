@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .config import load_config
+from .compensation_profiles import plot_compensation_profiles
 from .boundary_refinement import DEFAULT_FIELDS, generate_boundary_config
 from .boundary_analysis import analyze_boundaries
 from .convergence_scan import prepare_convergence_configs
@@ -111,6 +112,16 @@ def _parser() -> argparse.ArgumentParser:
         "--points-root",
         help="optional points directory containing point_XXXXXX/solution.npz",
     )
+    profiles = sub.add_parser("plot-compensation-profiles")
+    profiles.add_argument("--input", required=True)
+    profiles.add_argument("--points-root", required=True)
+    profiles.add_argument("--output-directory", required=True)
+    profiles.add_argument("--interactions", nargs="+", type=float, default=[1.0, 1.125, 1.25])
+    profiles.add_argument("--bandwidth", type=float, default=1.0)
+    profiles.add_argument("--metal-ratio", type=float, default=0.5)
+    profiles.add_argument("--edge-ratio", type=float, default=1.0e-4)
+    profiles.add_argument("--sigma-floor", type=float, default=1.0e-8)
+    profiles.add_argument("--omega-window", type=float)
     return parser
 
 
@@ -191,6 +202,20 @@ def main(argv: list[str] | None = None) -> int:
             args.output_directory,
             args.bandwidth,
             args.points_root,
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "plot-compensation-profiles":
+        outputs = plot_compensation_profiles(
+            args.input,
+            args.points_root,
+            args.output_directory,
+            args.interactions,
+            args.bandwidth,
+            args.metal_ratio,
+            args.edge_ratio,
+            args.sigma_floor,
+            args.omega_window,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
