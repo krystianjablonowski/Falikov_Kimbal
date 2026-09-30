@@ -14,6 +14,7 @@ from .convergence_analysis import analyze_convergence
 from .finite_filling_analysis import analyze_finite_filling
 from .io import atomic_json
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
+from .spectral_profiles import plot_spectral_profiles
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
 from .temperature_analysis import (
     fit_activation_groups,
@@ -122,6 +123,16 @@ def _parser() -> argparse.ArgumentParser:
     profiles.add_argument("--edge-ratio", type=float, default=1.0e-4)
     profiles.add_argument("--sigma-floor", type=float, default=1.0e-8)
     profiles.add_argument("--omega-window", type=float)
+    spectral_profiles = sub.add_parser("plot-spectral-profiles")
+    spectral_profiles.add_argument("--input", required=True)
+    spectral_profiles.add_argument("--points-root", required=True)
+    spectral_profiles.add_argument("--output-directory", required=True)
+    spectral_profiles.add_argument("--interactions", nargs="+", type=float, default=[1.0, 1.125, 1.25])
+    spectral_profiles.add_argument("--bandwidth", type=float, default=1.0)
+    spectral_profiles.add_argument("--metal-ratio", type=float, default=0.5)
+    spectral_profiles.add_argument("--edge-ratio", type=float, default=1.0e-4)
+    spectral_profiles.add_argument("--sigma-floor", type=float, default=1.0e-8)
+    spectral_profiles.add_argument("--omega-window", type=float)
     return parser
 
 
@@ -207,6 +218,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "plot-compensation-profiles":
         outputs = plot_compensation_profiles(
+            args.input,
+            args.points_root,
+            args.output_directory,
+            args.interactions,
+            args.bandwidth,
+            args.metal_ratio,
+            args.edge_ratio,
+            args.sigma_floor,
+            args.omega_window,
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "plot-spectral-profiles":
+        outputs = plot_spectral_profiles(
             args.input,
             args.points_root,
             args.output_directory,
