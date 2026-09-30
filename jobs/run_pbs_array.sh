@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #PBS -N fk_transport
 #PBS -l select=1:ncpus=1:mem=6gb
-#PBS -l walltime=24:00:00
+#PBS -l walltime=12:00:00
 #PBS -j oe
 
 set -euo pipefail
@@ -18,6 +18,7 @@ CONFIG="${CONFIG:-configs/pilot_half_filling.json}"
 ARRAY_INDEX="${PBS_ARRAY_INDEX:-${PBS_ARRAYID:-}}"
 BATCH_SIZE="${BATCH_SIZE:-1}"
 TASK_COUNT="${TASK_COUNT:-}"
+FK_OUTPUT_MODE="${FK_OUTPUT_MODE:-compact}"
 
 if [[ -z "${ARRAY_INDEX}" ]]; then
   echo "PBS array index is unavailable" >&2
@@ -25,6 +26,7 @@ if [[ -z "${ARRAY_INDEX}" ]]; then
 fi
 
 export PYTHONPATH="${PWD}/src"
+export FK_OUTPUT_MODE
 if [[ -z "${TASK_COUNT}" ]]; then
   TASK_COUNT=$("${PYTHON_EXECUTABLE}" -m fk_transport manifest --config "${CONFIG}" | "${PYTHON_EXECUTABLE}" -c 'import json,sys; print(json.load(sys.stdin)["tasks"])')
 fi

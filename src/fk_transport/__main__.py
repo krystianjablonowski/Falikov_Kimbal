@@ -17,6 +17,7 @@ from .mechanism_analysis import analyze_transport_mechanism
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .spectral_profiles import plot_spectral_profiles
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
+from .storage import compact_results
 from .temperature_analysis import (
     fit_activation_groups,
     fit_temperature_scan,
@@ -30,7 +31,7 @@ from .validation import run_validation
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="fk_transport")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("validate", "manifest", "sweep", "status", "merge", "plot"):
+    for name in ("validate", "manifest", "sweep", "status", "merge", "plot", "compact-results"):
         command = sub.add_parser(name)
         command.add_argument("--config", required=True)
         if name == "sweep":
@@ -303,6 +304,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "merge":
         print(merge_results(cfg))
+        return 0
+    if args.command == "compact-results":
+        print(json.dumps(compact_results(cfg), indent=2))
         return 0
     if args.command == "plot":
         summary = output_root(cfg) / "summary.csv"

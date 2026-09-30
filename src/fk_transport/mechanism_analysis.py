@@ -184,7 +184,7 @@ def _plot_centroid_correlations(rows: list[dict], output: Path) -> list[Path]:
             if selected:
                 fig.colorbar(scatter, ax=axes, label=r"disorder $\Delta/W$")
             fig.suptitle(rf"spectral--transport asymmetry, $n_c={filling:g}$")
-            path = output / f"centroid_correlation_n_{_tag(filling)}.png"
+            path = output / f"centroid_correlation_n_{_tag(filling)}.pdf"
             _save_publication_figure(fig, path)
             plt.close(fig)
             outputs.append(path)
@@ -230,7 +230,7 @@ def _plot_contours_by_filling(
             axes[0].set_ylabel(r"interaction $U/W$")
             axes[1].legend(frameon=False)
             fig.suptitle(rf"thermoelectric compensation contours, $T/W={temperature:g}$")
-            path = output / f"compensation_contours_fillings_T_{_tag(temperature)}.png"
+            path = output / f"compensation_contours_fillings_T_{_tag(temperature)}.pdf"
             _save_publication_figure(fig, path)
             plt.close(fig)
             outputs.append(path)
@@ -308,7 +308,7 @@ def _plot_linecuts(
                     fig.tight_layout()
                     path = output / (
                         f"mechanism_linecut_n_{_tag(filling)}_U_{_tag(interaction / bandwidth)}"
-                        f"_T_{_tag(temperature / bandwidth)}.png"
+                        f"_T_{_tag(temperature / bandwidth)}.pdf"
                     )
                     _save_publication_figure(fig, path)
                     plt.close(fig)
@@ -383,7 +383,7 @@ def _plot_reliability(rows: list[dict], output: Path) -> list[Path]:
             axes[0].legend(frameon=False, fontsize=7)
             fig.suptitle(rf"reliability test, $T/W={temperature:g}$")
             fig.tight_layout()
-            path = output / f"reliability_maxima_T_{_tag(temperature)}.png"
+            path = output / f"reliability_maxima_T_{_tag(temperature)}.pdf"
             _save_publication_figure(fig, path)
             plt.close(fig)
             outputs.append(path)

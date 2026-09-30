@@ -4,6 +4,7 @@ set -euo pipefail
 CONFIG="${1:-configs/pilot_half_filling.json}"
 PYTHON_EXECUTABLE="${PYTHON_EXECUTABLE:-python3}"
 BATCH_SIZE="${BATCH_SIZE:-1}"
+FK_OUTPUT_MODE="${FK_OUTPUT_MODE:-compact}"
 export PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}"
 
 if [[ ! "${BATCH_SIZE}" =~ ^[1-9][0-9]*$ ]]; then
@@ -20,5 +21,5 @@ fi
 JOBS=$(((TASKS + BATCH_SIZE - 1) / BATCH_SIZE))
 echo "Spectral points: ${TASKS}; points per PBS job: ${BATCH_SIZE}; PBS jobs: ${JOBS}"
 qsub -t "0-$((JOBS - 1))" \
-  -v "CONFIG=${CONFIG},PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE},BATCH_SIZE=${BATCH_SIZE},TASK_COUNT=${TASKS}" \
+  -v "CONFIG=${CONFIG},PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE},BATCH_SIZE=${BATCH_SIZE},TASK_COUNT=${TASKS},FK_OUTPUT_MODE=${FK_OUTPUT_MODE}" \
   jobs/run_pbs_array.sh

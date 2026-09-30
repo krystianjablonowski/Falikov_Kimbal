@@ -98,6 +98,9 @@ def save_point(
     observables: list[dict],
     filling_info: dict | None = None,
 ) -> None:
+    output_mode = os.environ.get("FK_OUTPUT_MODE", "compact").strip().lower()
+    if output_mode not in {"compact", "full"}:
+        raise ValueError("FK_OUTPUT_MODE must be 'compact' or 'full'")
     directory.mkdir(parents=True, exist_ok=True)
     atomic_npz(
         directory / "solution.npz",
@@ -109,54 +112,56 @@ def save_point(
         rho_typ=solution.rho_typ,
         tau=tau,
     )
-    atomic_gzip_csv(
-        directory / "spectral.csv.gz",
-        [
-            "omega",
-            "rho_arith",
-            "rho_typ",
-            "green_real",
-            "green_imag",
-            "hybridization_real",
-            "hybridization_imag",
-            "sigma_real",
-            "sigma_imag",
-        ],
-        [
-            solution.omega,
-            solution.rho_arith,
-            solution.rho_typ,
-            solution.green.real,
-            solution.green.imag,
-            solution.hybridization.real,
-            solution.hybridization.imag,
-            solution.self_energy.real,
-            solution.self_energy.imag,
-        ],
-    )
-    atomic_gzip_csv(
-        directory / "transport.csv.gz", ["omega", "tau"], [solution.omega, tau]
-    )
-    convergence_rows = [
-        {
-            "iteration": i + 1,
-            "residual": residual,
-            "sum_rule": solution.sum_rule_history[min(i, len(solution.sum_rule_history) - 1)],
-            "min_dos": solution.min_dos_history[min(i, len(solution.min_dos_history) - 1)],
-            "rho_floor_count": solution.floor_count_history[min(i, len(solution.floor_count_history) - 1)],
-            "max_imag_sigma": solution.causality_history[min(i, len(solution.causality_history) - 1)],
-        }
-        for i, residual in enumerate(solution.residual_history)
-    ]
-    convergence_path = directory / "convergence.csv"
-    temporary = convergence_path.with_name(convergence_path.name + f".{os.getpid()}.tmp")
-    with temporary.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(convergence_rows[0]))
-        writer.writeheader()
-        writer.writerows(convergence_rows)
-    os.replace(temporary, convergence_path)
+    if output_mode == "full":
+        atomic_gzip_csv(
+            directory / "spectral.csv.gz",
+            [
+                "omega",
+                "rho_arith",
+                "rho_typ",
+                "green_real",
+                "green_imag",
+                "hybridization_real",
+                "hybridization_imag",
+                "sigma_real",
+                "sigma_imag",
+            ],
+            [
+                solution.omega,
+                solution.rho_arith,
+                solution.rho_typ,
+                solution.green.real,
+                solution.green.imag,
+                solution.hybridization.real,
+                solution.hybridization.imag,
+                solution.self_energy.real,
+                solution.self_energy.imag,
+            ],
+        )
+        atomic_gzip_csv(
+            directory / "transport.csv.gz", ["omega", "tau"], [solution.omega, tau]
+        )
+        convergence_rows = [
+            {
+                "iteration": i + 1,
+                "residual": residual,
+                "sum_rule": solution.sum_rule_history[min(i, len(solution.sum_rule_history) - 1)],
+                "min_dos": solution.min_dos_history[min(i, len(solution.min_dos_history) - 1)],
+                "rho_floor_count": solution.floor_count_history[min(i, len(solution.floor_count_history) - 1)],
+                "max_imag_sigma": solution.causality_history[min(i, len(solution.causality_history) - 1)],
+            }
+            for i, residual in enumerate(solution.residual_history)
+        ]
+        convergence_path = directory / "convergence.csv"
+        temporary = convergence_path.with_name(convergence_path.name + f".{os.getpid()}.tmp")
+        with temporary.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(convergence_rows[0]))
+            writer.writeheader()
+            writer.writerows(convergence_rows)
+        os.replace(temporary, convergence_path)
     atomic_json(directory / "observables.json", observables)
-    atomic_json(directory / "config.resolved.json", canonical_config(cfg))
+    if output_mode == "full":
+        atomic_json(directory / "config.resolved.json", canonical_config(cfg))
     metadata = {
         "status": solution.status,
         "task": task,
@@ -166,6 +171,7 @@ def save_point(
         "platform": platform.platform(),
         "numpy": np.__version__,
         "code_commit": code_commit(Path(__file__).resolve().parents[3]),
+        "output_mode": output_mode,
         "iterations": solution.iterations,
         "converged": solution.converged,
         "chemical_potential": solution.chemical_potential,
