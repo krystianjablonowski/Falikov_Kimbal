@@ -68,13 +68,15 @@ class PlottingTests(unittest.TestCase):
             outputs = plot_transport_heatmaps(summary)
             self.assertEqual(len(outputs), 9)
             self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in outputs))
-            self.assertTrue(all(path.with_suffix(".pdf").is_file() for path in outputs))
+            self.assertTrue(all(path.suffix == ".pdf" for path in outputs))
+            self.assertFalse(any(root.glob("*.png")))
             overview = plot_summary(summary)
             self.assertTrue(overview.is_file() and overview.stat().st_size > 0)
-            self.assertTrue(overview.with_suffix(".pdf").is_file())
+            self.assertEqual(overview.suffix, ".pdf")
             summaries = plot_all_temperature_summaries(summary)
             self.assertEqual(len(summaries), 2)
             self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in summaries))
+            self.assertFalse(any(root.glob("*.png")))
 
 
 if __name__ == "__main__":

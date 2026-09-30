@@ -237,7 +237,7 @@ def plot_spectral_profiles(
             group,
             Path(points_root),
             output / (
-                f"spectral_profiles_n_{tag(filling)}_U_{tag(interaction)}_T_{tag(temperature)}.png"
+                f"spectral_profiles_n_{tag(filling)}_U_{tag(interaction)}_T_{tag(temperature)}.pdf"
             ),
             omega_window,
         )

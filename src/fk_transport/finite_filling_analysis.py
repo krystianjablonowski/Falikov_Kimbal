@@ -159,7 +159,7 @@ def _plot_four_maps(
             else:
                 fig.colorbar(image, cax=color_axis, label=symbol)
         fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
-        _save_publication_figure(fig, output)
+        output = _save_publication_figure(fig, output)
         plt.close(fig)
     return output
 
@@ -196,7 +196,7 @@ def _plot_relative_maps(
         else:
             fig.colorbar(image, cax=color_axis, label="typ/arith")
         fig.subplots_adjust(left=0.09, right=0.94, bottom=0.16, top=0.91)
-        _save_publication_figure(fig, output)
+        output = _save_publication_figure(fig, output)
         plt.close(fig)
     return output
 
@@ -271,7 +271,7 @@ def _plot_thermopower_zero_crossing_maps(
             else:
                 fig.colorbar(image, cax=color_axis, label=symbol)
         fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
-        _save_publication_figure(fig, output)
+        output = _save_publication_figure(fig, output)
         plt.close(fig)
     return output
 
@@ -298,21 +298,21 @@ def analyze_finite_filling(
             temperature_tag = f"{temperature:.6g}".replace(".", "p")
             outputs.append(_plot_relative_maps(
                 rows, filling, temperature_dimensional,
-                output / f"relative_transport_heatmaps_n_{filling_tag}_T_{temperature_tag}.png",
+                output / f"relative_transport_heatmaps_n_{filling_tag}_T_{temperature_tag}.pdf",
             ))
             outputs.append(_plot_four_maps(
                 rows, filling, temperature_dimensional,
                 (("power_factor", r"$S^2\sigma$"), ("zt_electronic", r"$ZT_{\rm el}$")),
-                output / f"thermoelectric_performance_heatmaps_n_{filling_tag}_T_{temperature_tag}.png",
+                output / f"thermoelectric_performance_heatmaps_n_{filling_tag}_T_{temperature_tag}.pdf",
             ))
             outputs.append(_plot_thermopower_zero_crossing_maps(
                 rows, filling, temperature_dimensional,
-                output / f"thermopower_zero_crossings_n_{filling_tag}_T_{temperature_tag}.png",
+                output / f"thermopower_zero_crossings_n_{filling_tag}_T_{temperature_tag}.pdf",
             ))
             outputs.append(_plot_four_maps(
                 rows, filling, temperature_dimensional,
                 (("coupled_diffusivity_minus", r"$D_-$"),
                  ("coupled_diffusivity_plus", r"$D_+$")),
-                output / f"coupled_diffusivity_heatmaps_n_{filling_tag}_T_{temperature_tag}.png",
+                output / f"coupled_diffusivity_heatmaps_n_{filling_tag}_T_{temperature_tag}.pdf",
             ))
     return outputs

@@ -59,9 +59,6 @@ elif [[ "${PUBLISH_MODE}" == "summary" ]]; then
     "${RESULT_ROOT}/validation_report.json" \
     "${RESULT_ROOT}/rerun_indices.txt" \
     "${RESULT_ROOT}/manifest.json" \
-    "${RESULT_ROOT}"/*_summary*.png \
-    "${RESULT_ROOT}"/*_heatmap*.png \
-    "${RESULT_ROOT}"/*boundary*.png \
     "${RESULT_ROOT}"/combined_summary.csv \
     "${RESULT_ROOT}"/relative_boundary_crossings.csv \
     "${RESULT_ROOT}"/relative_boundary_differences.csv \

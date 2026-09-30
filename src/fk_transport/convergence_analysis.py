@@ -65,5 +65,5 @@ def analyze_convergence(summaries,etas,output_directory,threshold=1e-2,maximum_s
         axis.plot(x,[r["median_abs_delta"] for r in group],"o-",label="median")
         axis.plot(x,[r["p90_abs_delta"] for r in group],"s--",label="90th percentile")
         axis.set_xscale("log");axis.invert_xaxis();axis.set_xlabel(r"broadening $\eta/W$");axis.set_ylabel(r"$|\Delta_c^\kappa-\Delta_c^\sigma|/W$");axis.set_title(rf"$n_c={filling:g}$, $T/W={temperature:g}$");axis.legend(frameon=False);fig.tight_layout()
-        tag=f"n_{filling:.6g}_T_{temperature:.6g}".replace(".","p");path=out/f"eta_convergence_{tag}.png";fig.savefig(path,dpi=300);fig.savefig(path.with_suffix(".pdf"));plt.close(fig);outputs.append(path)
+        tag=f"n_{filling:.6g}_T_{temperature:.6g}".replace(".","p");path=out/f"eta_convergence_{tag}.pdf";fig.savefig(path);plt.close(fig);outputs.append(path)
     return outputs

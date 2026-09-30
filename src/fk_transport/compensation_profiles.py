@@ -336,7 +336,7 @@ def plot_compensation_profiles(
                 group,
                 Path(points_root),
                 output / (
-                    f"transport_profiles_n_{filling_tag}_U_{interaction_tag}_T_{temperature_tag}.png"
+                    f"transport_profiles_n_{filling_tag}_U_{interaction_tag}_T_{temperature_tag}.pdf"
                 ),
                 omega_window,
             )

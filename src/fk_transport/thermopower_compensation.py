@@ -445,13 +445,13 @@ def analyze_thermopower_compensation(
         outputs.extend(
             [
                 _plot_contours(
-                    crossings, filling, output / f"compensation_contours_n_{tag}.png"
+                    crossings, filling, output / f"compensation_contours_n_{tag}.pdf"
                 ),
                 _plot_branch_comparison(
-                    crossings, filling, output / f"compensation_branch_comparison_n_{tag}.png"
+                    crossings, filling, output / f"compensation_branch_comparison_n_{tag}.pdf"
                 ),
                 _plot_separation(
-                    summaries, filling, output / f"compensation_separation_n_{tag}.png"
+                    summaries, filling, output / f"compensation_separation_n_{tag}.pdf"
                 ),
             ]
         )
@@ -467,7 +467,7 @@ def analyze_thermopower_compensation(
                     _plot_spectral_summary(
                         diagnostics,
                         filling,
-                        output / f"transport_shape_distance_n_{tag}.png",
+                        output / f"transport_shape_distance_n_{tag}.pdf",
                     )
                 )
     return outputs

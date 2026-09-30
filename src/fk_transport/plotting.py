@@ -143,9 +143,12 @@ def _finish_axis(axis, panel: str) -> None:
     axis.text(0.03, 0.93, panel, transform=axis.transAxes, fontweight="bold", va="top")
 
 
-def _save_publication_figure(fig, output: Path) -> None:
-    fig.savefig(output, dpi=300)
-    fig.savefig(output.with_suffix(".pdf"))
+def _save_publication_figure(fig, output: Path) -> Path:
+    """Save one vector PDF and return its normalized destination path."""
+    destination = Path(output).with_suffix(".pdf")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(destination)
+    return destination
 
 
 def plot_summary(
@@ -163,7 +166,11 @@ def plot_summary(
         raise RuntimeError("plotting requires the optional matplotlib dependency") from exc
     summary_path = Path(summary_path)
     rows = _read_rows(summary_path)
-    output = Path(output_path) if output_path else summary_path.with_name("transport_summary.png")
+    output = (
+        Path(output_path).with_suffix(".pdf")
+        if output_path
+        else summary_path.with_name("transport_summary.pdf")
+    )
     filling = (
         sorted({float(row["target_filling"]) for row in rows})[0]
         if filling is None
@@ -244,7 +251,7 @@ def plot_summary(
                    frameon=False, bbox_to_anchor=(0.5, 0.995))
         fig.suptitle(rf"$n_c={filling:g}$, $T/W={temperature / bandwidth:g}$", y=0.90, fontsize=9)
         fig.subplots_adjust(left=0.08, right=0.98, bottom=0.10, top=0.78, wspace=0.38, hspace=0.36)
-        _save_publication_figure(fig, output)
+        output = _save_publication_figure(fig, output)
         plt.close(fig)
     return output
 
@@ -273,7 +280,7 @@ def plot_all_temperature_summaries(
         for temperature in sorted({float(row["temperature"]) for row in rows}):
             temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
             output = output_directory / (
-                f"transport_summary_n_{filling_tag}_T_{temperature_tag}.png"
+                f"transport_summary_n_{filling_tag}_T_{temperature_tag}.pdf"
             )
             outputs.append(
                 plot_summary(
@@ -351,8 +358,8 @@ def plot_transport_heatmaps(
                 else:
                     color_axis.set_visible(False)
                 fig.subplots_adjust(left=0.09, right=0.94, bottom=0.16, top=0.91)
-                output = output_directory / f"transport_heatmap_n_{filling_tag}_sigma_T0.png"
-                _save_publication_figure(fig, output)
+                output = output_directory / f"transport_heatmap_n_{filling_tag}_sigma_T0.pdf"
+                output = _save_publication_figure(fig, output)
                 plt.close(fig)
                 outputs.append(output)
 
@@ -469,9 +476,9 @@ def plot_transport_heatmaps(
                             color_axes[row_index].set_visible(False)
                     fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
                     output = output_directory / (
-                        f"{group_name}_heatmaps_n_{filling_tag}_T_{temperature_tag}.png"
+                        f"{group_name}_heatmaps_n_{filling_tag}_T_{temperature_tag}.pdf"
                     )
-                    _save_publication_figure(fig, output)
+                    output = _save_publication_figure(fig, output)
                     plt.close(fig)
                     outputs.append(output)
     return outputs

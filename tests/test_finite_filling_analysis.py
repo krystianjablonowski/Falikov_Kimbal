@@ -69,11 +69,11 @@ class FiniteFillingAnalysisTests(unittest.TestCase):
                         }
                     )
         with tempfile.TemporaryDirectory() as temporary:
-            output = Path(temporary) / "zero_crossings.png"
+            output = Path(temporary) / "zero_crossings.pdf"
             result = _plot_thermopower_zero_crossing_maps(rows, 0.3, 0.01, output)
             self.assertEqual(result, output)
             self.assertTrue(output.is_file())
-            self.assertTrue(output.with_suffix(".pdf").is_file())
+            self.assertFalse(any(Path(temporary).glob("*.png")))
 
 
 if __name__ == "__main__":

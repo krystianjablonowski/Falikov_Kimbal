@@ -339,7 +339,7 @@ def plot_temperature_scan(
     destination = (
         Path(output_path)
         if output_path is not None
-        else Path(scan_path).with_name("temperature_scan.png")
+        else Path(scan_path).with_name("temperature_scan.pdf")
     )
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig, axes = plt.subplots(2, 2, figsize=(7.0, 5.2))
@@ -356,7 +356,7 @@ def plot_temperature_scan(
         if field == "lorenz_over_L0":
             axis.axhline(1.0, color="0.5", linestyle=":", linewidth=0.8)
     fig.tight_layout()
-    fig.savefig(destination, dpi=300, bbox_inches="tight")
-    fig.savefig(destination.with_suffix(".pdf"), bbox_inches="tight")
+    destination = destination.with_suffix(".pdf")
+    fig.savefig(destination, bbox_inches="tight")
     plt.close(fig)
     return destination

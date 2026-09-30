@@ -165,8 +165,8 @@ Konfiguracja `configs/byczuk_transport_coarse.json` skanuje siatkę
 Siatka jest gęstsza w małych `U`, aby zawierała punkt `U/W=0.5`.
 Po `merge` polecenie `plot` zapisuje nieinterpolowane mapy kolorów:
 
-- `transport_heatmap_sigma_T0.png` — `sigma(T -> 0) = tau(omega=0)` dla DMFT i TMT;
-- `transport_heatmaps_T_0p01.png` i `transport_heatmaps_T_0p02.png` — skończone
+- `transport_heatmap_sigma_T0.pdf` — `sigma(T -> 0) = tau(omega=0)` dla DMFT i TMT;
+- `transport_heatmaps_T_0p01.pdf` i `transport_heatmaps_T_0p02.pdf` — skończone
   temperaturowo `sigma` i `kappa_e`.
 
 Osie są podane w jednostkach `W=2D`; w tej konfiguracji `W=1`. Cieplna
@@ -317,6 +317,8 @@ Skrypt najpierw tworzy deterministyczny manifest, a następnie wysyła tablicę
 PBS `0-(N-1)`. Jeden indeks odpowiada dokładnie jednemu punktowi spektralnemu
 `(U, disorder_full_width, branch)` przy half-fillingu. Każdy punkt ma osobny
 katalog, atomowy zapis i blokadę chroniącą przed dwoma jednoczesnymi writerami.
+Zadania proszą domyślnie o 12 godzin walltime i używają oszczędnego trybu
+`FK_OUTPUT_MODE=compact`.
 
 Kilka punktów spektralnych można wykonać kolejno wewnątrz jednego zadania PBS.
 Konfiguracja dokładna ma 1550 punktów, ale poniższe polecenie grupuje je po
@@ -356,13 +358,22 @@ obsługuje zarówno `PBS_ARRAY_INDEX`, jak i `PBS_ARRAYID`.
 
 ## Dane wyjściowe
 
-Każdy `points/point_NNNNNN/` zawiera:
+Domyślny tryb `compact` zapisuje w każdym `points/point_NNNNNN/`:
 
 - `solution.npz` — siatkę oraz zespolone `hybridization`, `G`, `Sigma`, DOS i `tau`;
-- `spectral.csv.gz` i `transport.csv.gz` — kolumnowe krzywe do dalszej analizy;
 - `observables.json` — `L11`, `L12`, `L22`, `sigma`, `S`, `kappa_e`, liczbę Lorenza i flagi;
-- `convergence.csv` — historię residuum, sum rule, minimum DOS, próg TMT i przyczynowość;
-- `config.resolved.json` i `metadata.json` — pełną konfigurację, hash, wersje i status.
+- `metadata.json` — hash konfiguracji, wersje i status.
+
+To wystarcza do `status`, `merge` i późniejszych analiz widmowych. Tryb
+`FK_OUTPUT_MODE=full` dodaje redundantne `spectral.csv.gz`, `transport.csv.gz`,
+`convergence.csv` i kopię konfiguracji. Już wykonane punkty można bezpiecznie
+odchudzić, zachowując `solution.npz`, poleceniem:
+
+```bash
+python -m fk_transport compact-results --config configs/pilot_half_filling.json
+```
+
+Generatory wykresów zapisują wyłącznie pliki PDF.
 
 `metadata.json` jest zapisywany na końcu i stanowi znacznik ukończenia. Merge
 weryfikuje hash konfiguracji. Duża liczba Lorenza przy `L11` poniżej progu jest
