@@ -153,6 +153,7 @@ def _parser() -> argparse.ArgumentParser:
     publication.add_argument("--temperatures", nargs="+", type=float)
     publication.add_argument("--localization-threshold", type=float, default=1.0e-4)
     publication.add_argument("--u-min", type=float, default=1.5)
+    publication.add_argument("--conductivity-relative-floor", type=float, default=1.0e-4)
     return parser
 
 
@@ -286,6 +287,7 @@ def main(argv: list[str] | None = None) -> int:
             args.temperatures,
             args.localization_threshold,
             args.u_min,
+            args.conductivity_relative_floor,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0

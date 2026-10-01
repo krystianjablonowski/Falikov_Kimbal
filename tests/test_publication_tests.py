@@ -7,7 +7,11 @@ from pathlib import Path
 
 import numpy as np
 
-from fk_transport.publication_tests import calculate_publication_diagnostics, fit_large_u_boundaries
+from fk_transport.publication_tests import (
+    boundary_coverage,
+    calculate_publication_diagnostics,
+    fit_large_u_boundaries,
+)
 
 
 class PublicationTestTests(unittest.TestCase):
@@ -43,6 +47,7 @@ class PublicationTestTests(unittest.TestCase):
             self.assertEqual(len(covariance), 1)
             self.assertLess(abs(float(covariance[0]["identity_absolute_error"])), 1.0e-10)
             self.assertTrue(all(np.isfinite(float(row["S_kelvin"])) for row in diagnostics))
+            self.assertTrue(all(row["transport_reliable"] for row in diagnostics))
 
     def test_large_u_fit_recovers_inverse_square_limit(self) -> None:
         rows, threshold = [], 1.0e-4
@@ -58,6 +63,15 @@ class PublicationTestTests(unittest.TestCase):
         self.assertEqual(len(fits), 1)
         self.assertTrue(np.isclose(float(fits[0]["delta_infinity"]), 1.2, atol=2.0e-3))
         self.assertTrue(np.isclose(float(fits[0]["coefficient_over_u2"]), 0.45, atol=5.0e-3))
+
+    def test_boundary_coverage_explains_missing_crossing(self) -> None:
+        rows = [
+            {"branch": "typ", "target_filling": 0.3, "temperature": 0.02,
+             "interaction": 2.0, "rho_typ_over_arith_zero": value}
+            for value in (0.2, 0.1, 0.05)
+        ]
+        status = boundary_coverage(rows, 1.0e-4)
+        self.assertEqual(status[0]["status"], "threshold_not_reached")
 
 
 if __name__ == "__main__":

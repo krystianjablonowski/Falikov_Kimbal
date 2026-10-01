@@ -53,6 +53,7 @@ def calculate_publication_diagnostics(
     summary_paths: list[str | Path],
     points_roots: list[str | Path],
     temperatures: list[float] | None = None,
+    conductivity_relative_floor: float = 1.0e-4,
 ) -> tuple[list[dict], list[dict], list[dict[str, str]]]:
     """Reconstruct Kubo/Kelvin and arith/typ covariance identities from saved spectra."""
     if len(summary_paths) != len(points_roots):
@@ -80,7 +81,12 @@ def calculate_publication_diagnostics(
             m0, m1, transport_centroid = _moments(omega, tau, temperature)
             n0, n1, spectral_centroid = _moments(omega, rho_arith, temperature)
             kubo = -transport_centroid / temperature
-            kelvin = -spectral_centroid / temperature
+            # For the fixed spectrum used by this code, the Kelvin estimate is
+            # (d mu/dT)_n = -<omega>_rho/T.  Prefer the value already exported
+            # by combined_observables and retain the moment reconstruction as a
+            # transparent fallback for older summaries.
+            exported_kelvin = _number(row, "dmu_dT_fixed_density")
+            kelvin = exported_kelvin if np.isfinite(exported_kelvin) else -spectral_centroid / temperature
             zero = int(np.argmin(np.abs(omega)))
             point_rows.append(
                 {
@@ -97,8 +103,14 @@ def calculate_publication_diagnostics(
                     "N1_spectral": n1,
                     "S_kubo_reconstructed": kubo,
                     "S_kubo_summary": _number(row, "thermopower"),
+                    "S_kubo_reconstruction_error": kubo - _number(row, "thermopower"),
                     "S_kelvin": kelvin,
+                    "S_kelvin_source": (
+                        "summary_dmu_dT_fixed_density"
+                        if np.isfinite(exported_kelvin) else "fixed_spectrum_DOS_moment"
+                    ),
                     "S_kubo_minus_kelvin": kubo - kelvin,
+                    "sigma": _number(row, "sigma"),
                     "lorenz_over_L0": _number(row, "lorenz_over_L0"),
                     "rho_arith_zero": float(rho_arith[zero]),
                     "rho_typ_zero": float(rho_typ[zero]),
@@ -107,6 +119,23 @@ def calculate_publication_diagnostics(
                         if rho_arith[zero] > 0.0 else float("nan")
                     ),
                 }
+            )
+
+    reliability_groups: dict[tuple[int, float, float, str], list[dict]] = defaultdict(list)
+    for row in point_rows:
+        reliability_groups[(
+            int(row["dataset"]), round(float(row["target_filling"]), 12),
+            round(float(row["temperature"]), 12), str(row["branch"]),
+        )].append(row)
+    for rows in reliability_groups.values():
+        finite_sigma = [float(row["sigma"]) for row in rows if np.isfinite(float(row["sigma"]))]
+        maximum = max(finite_sigma, default=float("nan"))
+        cutoff = conductivity_relative_floor * maximum if maximum > 0.0 else float("nan")
+        for row in rows:
+            row["sigma_reliability_cutoff"] = cutoff
+            row["transport_reliable"] = bool(
+                np.isfinite(float(row["sigma"])) and np.isfinite(cutoff)
+                and float(row["sigma"]) >= cutoff
             )
 
     grouped: dict[tuple[float, ...], dict[str, dict]] = defaultdict(dict)
@@ -156,9 +185,40 @@ def calculate_publication_diagnostics(
                 "measured_delta_S": measured,
                 "identity_absolute_error": abs(prediction - measured),
                 "sigma_typ_over_arith": mean_ratio,
+                "transport_reliable": bool(arith["transport_reliable"] and typ["transport_reliable"]),
             }
         )
     return point_rows, covariance_rows, summary_rows
+
+
+def boundary_coverage(point_rows: list[dict], threshold: float) -> list[dict]:
+    """Report why a threshold contour is present or absent at each fixed U."""
+    grouped: dict[tuple[float, float, float], list[dict]] = defaultdict(list)
+    for row in point_rows:
+        if row["branch"] == "typ":
+            grouped[(float(row["target_filling"]), float(row["temperature"]),
+                     float(row["interaction"]))].append(row)
+    output: list[dict] = []
+    for (filling, temperature, interaction), rows in sorted(grouped.items()):
+        values = np.asarray([float(row["rho_typ_over_arith_zero"]) for row in rows])
+        valid = values[np.isfinite(values) & (values > 0.0)]
+        if valid.size < 2:
+            status = "insufficient_data"
+        elif float(np.min(valid)) > threshold:
+            status = "threshold_not_reached"
+        elif float(np.max(valid)) < threshold:
+            status = "already_below_threshold"
+        else:
+            status = "crossed"
+        output.append({
+            "target_filling": filling, "temperature": temperature,
+            "interaction": interaction, "ratio_threshold": threshold,
+            "valid_disorder_points": int(valid.size),
+            "minimum_ratio": float(np.min(valid)) if valid.size else float("nan"),
+            "maximum_ratio": float(np.max(valid)) if valid.size else float("nan"),
+            "status": status,
+        })
+    return output
 
 
 def _crossing(x: np.ndarray, values: np.ndarray, level: float) -> float | None:
@@ -223,7 +283,9 @@ def _plot_covariance(rows: list[dict], output: Path) -> Path:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    finite = [row for row in rows if np.isfinite(float(row["predicted_delta_S"])) and np.isfinite(float(row["measured_delta_S"]))]
+    finite = [row for row in rows if row.get("transport_reliable", True)
+              and np.isfinite(float(row["predicted_delta_S"]))
+              and np.isfinite(float(row["measured_delta_S"]))]
     with plt.rc_context(_publication_style()):
         fig, axis = plt.subplots(figsize=(4.0, 3.4))
         x = np.asarray([float(row["predicted_delta_S"]) for row in finite])
@@ -235,6 +297,10 @@ def _plot_covariance(rows: list[dict], output: Path) -> Path:
             axis.plot([-limit, limit], [-limit, limit], "k:", linewidth=0.8)
         axis.set_xlabel(r"covariance prediction for $S_{typ}-S_{arith}$")
         axis.set_ylabel(r"measured $S_{typ}-S_{arith}$")
+        axis.set_title("covariance identity check")
+        if not finite:
+            axis.text(0.5, 0.5, "no transport-reliable points", ha="center", va="center",
+                      transform=axis.transAxes)
         fig.tight_layout()
         output = _save_publication_figure(fig, output)
         plt.close(fig)
@@ -245,7 +311,9 @@ def _plot_kubo_kelvin(rows: list[dict], output: Path) -> Path:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    finite = [row for row in rows if np.isfinite(float(row["S_kubo_reconstructed"])) and np.isfinite(float(row["S_kelvin"]))]
+    finite = [row for row in rows if row.get("transport_reliable", True)
+              and np.isfinite(float(row["S_kubo_reconstructed"]))
+              and np.isfinite(float(row["S_kelvin"]))]
     with plt.rc_context(_publication_style()):
         fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.2))
         for axis, branch in zip(axes, ("arith", "typ")):
@@ -261,6 +329,9 @@ def _plot_kubo_kelvin(rows: list[dict], output: Path) -> Path:
             axis.axvline(0.0, color="0.6", linewidth=0.6)
             axis.set_title(branch)
             axis.set_xlabel(r"Kelvin $S_K$")
+            if not selected:
+                axis.text(0.5, 0.5, "no transport-reliable points", ha="center", va="center",
+                          transform=axis.transAxes)
         axes[0].set_ylabel(r"Kubo $S$")
         fig.tight_layout()
         output = _save_publication_figure(fig, output)
@@ -268,7 +339,7 @@ def _plot_kubo_kelvin(rows: list[dict], output: Path) -> Path:
     return output
 
 
-def _plot_large_u(boundaries: list[dict], fits: list[dict], output: Path) -> Path:
+def _plot_large_u(boundaries: list[dict], fits: list[dict], coverage: list[dict], output: Path) -> Path:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -291,7 +362,16 @@ def _plot_large_u(boundaries: list[dict], fits: list[dict], output: Path) -> Pat
                 axis.plot(xx, yy, color=line.get_color(), linewidth=1.0)
         axis.set_xlabel(r"$1/(U/W)^2$")
         axis.set_ylabel(r"localization boundary $\Delta_c/W$")
-        axis.legend(frameon=False, fontsize=6, ncol=2)
+        if groups:
+            axis.legend(frameon=False, fontsize=6, ncol=2)
+        else:
+            statuses = defaultdict(int)
+            for row in coverage:
+                statuses[str(row["status"])] += 1
+            explanation = "no threshold crossings"
+            if statuses:
+                explanation += "\n" + "\n".join(f"{key}: {value}" for key, value in sorted(statuses.items()))
+            axis.text(0.5, 0.5, explanation, ha="center", va="center", transform=axis.transAxes)
         fig.tight_layout()
         output = _save_publication_figure(fig, output)
         plt.close(fig)
@@ -355,23 +435,29 @@ def analyze_publication_tests(
     summary_paths: list[str | Path], points_roots: list[str | Path], output_directory: str | Path,
     bandwidth: float = 1.0, temperatures: list[float] | None = None,
     localization_threshold: float = 1.0e-4, u_min: float = 1.5,
+    conductivity_relative_floor: float = 1.0e-4,
 ) -> list[Path]:
-    if bandwidth <= 0.0 or localization_threshold <= 0.0 or u_min <= 0.0:
+    if (bandwidth <= 0.0 or localization_threshold <= 0.0 or u_min <= 0.0
+            or conductivity_relative_floor <= 0.0):
         raise ValueError("bandwidth, localization threshold, and u_min must be positive")
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
-    points, covariance, summaries = calculate_publication_diagnostics(summary_paths, points_roots, temperatures)
+    points, covariance, summaries = calculate_publication_diagnostics(
+        summary_paths, points_roots, temperatures, conductivity_relative_floor
+    )
     boundaries, fits = fit_large_u_boundaries(points, localization_threshold, u_min * bandwidth)
+    coverage = boundary_coverage(points, localization_threshold)
     crossings = extract_zero_crossings(summaries, bandwidth)
     products = [
         _write_rows(output / "publication_point_diagnostics.csv", points),
         _write_rows(output / "arith_typ_covariance_test.csv", covariance),
         _write_rows(output / "localization_boundaries.csv", boundaries),
+        _write_rows(output / "localization_boundary_coverage.csv", coverage),
         _write_rows(output / "large_u_localization_fits.csv", fits),
         _write_rows(output / "thermopower_zero_crossings.csv", crossings),
         _plot_covariance(covariance, output / "arith_typ_covariance_test.pdf"),
         _plot_kubo_kelvin(points, output / "kubo_kelvin_comparison.pdf"),
-        _plot_large_u(boundaries, fits, output / "large_u_localization_scaling.pdf"),
+        _plot_large_u(boundaries, fits, coverage, output / "large_u_localization_scaling.pdf"),
     ]
     products.extend(_plot_phase_lines(crossings, boundaries, output))
     return products

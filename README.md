@@ -427,6 +427,7 @@ python -m fk_transport publication-tests \
   --output-directory results/publication_tests \
   --temperatures 0.01 0.02 \
   --localization-threshold 1e-4 \
+  --conductivity-relative-floor 1e-4 \
   --u-min 1.5
 ```
 
@@ -435,6 +436,15 @@ Polecenie porównuje linie `S=0` z granicą lokalizacji, dopasowuje
 `S_typ-S_arith`, porównuje termosiłę Kubo i Kelvina oraz eksportuje liczbę
 Lorenza. Można podać wiele plików w `--summaries` i tyle samo katalogów w
 `--points-roots`, aby wspólnie przeanalizować różne wypełnienia.
+
+Punkty, dla których przewodność spada poniżej podanej części maksymalnej
+przewodności danej gałęzi, są zachowane w CSV, ale pomijane na wykresach
+termosiły jako numerycznie niestabilne. Plik
+`localization_boundary_coverage.csv` wyjaśnia dla każdego `U`, czy zadany próg
+lokalizacji został przecięty, nie został osiągnięty, czy cały dostępny zakres
+leży już poniżej progu. Dzięki temu brak krzywej nie daje pustego wykresu bez
+diagnozy. Wykres kowariancji jest testem tożsamości algebraicznej i służy do
+walidacji implementacji, a nie jako niezależny wynik fizyczny.
 
 Polecenie zapisuje względne zanikanie `typ/arith`, moc termoelektryczną,
 elektronowe `ZT` oraz wartości własne sprzężonej macierzy dyfuzji `D_-`, `D_+`.
