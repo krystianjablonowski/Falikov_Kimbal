@@ -15,6 +15,7 @@ from .finite_filling_analysis import analyze_finite_filling
 from .io import atomic_json
 from .mechanism_analysis import analyze_transport_mechanism
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
+from .publication_tests import analyze_publication_tests
 from .spectral_profiles import plot_spectral_profiles
 from .sweep import build_tasks, merge_results, output_root, run_task, scan_status, write_manifest
 from .storage import compact_results
@@ -144,6 +145,14 @@ def _parser() -> argparse.ArgumentParser:
     mechanism.add_argument("--bandwidth", type=float, default=1.0)
     mechanism.add_argument("--temperatures", nargs="+", type=float)
     mechanism.add_argument("--skip-linecuts", action="store_true")
+    publication = sub.add_parser("publication-tests")
+    publication.add_argument("--summaries", nargs="+", required=True)
+    publication.add_argument("--points-roots", nargs="+", required=True)
+    publication.add_argument("--output-directory", required=True)
+    publication.add_argument("--bandwidth", type=float, default=1.0)
+    publication.add_argument("--temperatures", nargs="+", type=float)
+    publication.add_argument("--localization-threshold", type=float, default=1.0e-4)
+    publication.add_argument("--u-min", type=float, default=1.5)
     return parser
 
 
@@ -265,6 +274,18 @@ def main(argv: list[str] | None = None) -> int:
             args.bandwidth,
             args.temperatures,
             args.skip_linecuts,
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "publication-tests":
+        outputs = analyze_publication_tests(
+            args.summaries,
+            args.points_roots,
+            args.output_directory,
+            args.bandwidth,
+            args.temperatures,
+            args.localization_threshold,
+            args.u_min,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0

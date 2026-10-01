@@ -417,6 +417,25 @@ python -m fk_transport analyze-filling \
   --bandwidth 1.0
 ```
 
+Testy numeryczne głównej tezy publikacyjnej można wykonać bez ponownego DMFT,
+korzystając z `summary.csv` i zachowanych `solution.npz`:
+
+```bash
+python -m fk_transport publication-tests \
+  --summaries results/stage5_filling_0p3_dense/summary.csv \
+  --points-roots results/stage5_filling_0p3_dense/points \
+  --output-directory results/publication_tests \
+  --temperatures 0.01 0.02 \
+  --localization-threshold 1e-4 \
+  --u-min 1.5
+```
+
+Polecenie porównuje linie `S=0` z granicą lokalizacji, dopasowuje
+`Delta_c=Delta_infinity+C/U^2`, sprawdza dokładną relację kowariancyjną dla
+`S_typ-S_arith`, porównuje termosiłę Kubo i Kelvina oraz eksportuje liczbę
+Lorenza. Można podać wiele plików w `--summaries` i tyle samo katalogów w
+`--points-roots`, aby wspólnie przeanalizować różne wypełnienia.
+
 Polecenie zapisuje względne zanikanie `typ/arith`, moc termoelektryczną,
 elektronowe `ZT` oraz wartości własne sprzężonej macierzy dyfuzji `D_-`, `D_+`.
 
