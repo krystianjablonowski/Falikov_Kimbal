@@ -73,6 +73,18 @@ class PublicationTestTests(unittest.TestCase):
         status = boundary_coverage(rows, 1.0e-4)
         self.assertEqual(status[0]["status"], "threshold_not_reached")
 
+    def test_large_u_fit_ignores_upward_recrossing(self) -> None:
+        threshold = 1.0e-2
+        rows = []
+        for disorder, ratio in ((0.0, 1.0), (1.0, 1.0e-3), (2.0, 1.0), (3.0, 1.0e-4)):
+            rows.append({"branch": "typ", "target_filling": 0.4, "temperature": 0.02,
+                         "interaction": 2.0, "disorder_full_width": disorder,
+                         "rho_typ_over_arith_zero": ratio})
+        boundaries, _ = fit_large_u_boundaries(rows, threshold, 1.5)
+        self.assertEqual(len(boundaries), 1)
+        self.assertEqual(boundaries[0]["crossing_candidates"], 2)
+        self.assertLess(float(boundaries[0]["critical_disorder"]), 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

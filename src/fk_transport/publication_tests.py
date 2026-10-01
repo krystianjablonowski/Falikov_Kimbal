@@ -68,7 +68,8 @@ def calculate_publication_diagnostics(
                 row for row in rows
                 if any(np.isclose(_number(row, "temperature"), value) for value in temperatures)
             ]
-        summary_rows.extend(rows)
+        dataset_rows = [{**row, "dataset": str(dataset)} for row in rows]
+        summary_rows.extend(dataset_rows)
         root = Path(root_value)
         for row in rows:
             index = int(_number(row, "index"))
@@ -221,19 +222,31 @@ def boundary_coverage(point_rows: list[dict], threshold: float) -> list[dict]:
     return output
 
 
-def _crossing(x: np.ndarray, values: np.ndarray, level: float) -> float | None:
+def _crossing_candidates(
+    x: np.ndarray, values: np.ndarray, level: float, descending_only: bool = True
+) -> list[float]:
     valid = np.isfinite(values) & (values > 0.0)
     x, values = x[valid], values[valid]
     if x.size < 2:
-        return None
+        return []
+    order = np.argsort(x)
+    x, values = x[order], values[order]
     shifted = np.log10(values) - np.log10(level)
+    found: list[float] = []
     for index in range(x.size - 1):
         if shifted[index] == 0.0:
-            return float(x[index])
+            found.append(float(x[index]))
         if shifted[index] * shifted[index + 1] < 0.0:
+            if descending_only and not (shifted[index] > 0.0 > shifted[index + 1]):
+                continue
             fraction = -shifted[index] / (shifted[index + 1] - shifted[index])
-            return float(x[index] + fraction * (x[index + 1] - x[index]))
-    return None
+            found.append(float(x[index] + fraction * (x[index + 1] - x[index])))
+    return found
+
+
+def _crossing(x: np.ndarray, values: np.ndarray, level: float) -> float | None:
+    candidates = _crossing_candidates(x, values, level)
+    return candidates[0] if candidates else None
 
 
 def fit_large_u_boundaries(
@@ -243,20 +256,34 @@ def fit_large_u_boundaries(
     for row in point_rows:
         if row["branch"] == "typ":
             grouped[(float(row["target_filling"]), float(row["temperature"]), float(row["interaction"]))].append(row)
-    boundaries: list[dict] = []
+    candidate_groups: dict[tuple[float, float], list[tuple[float, list[float]]]] = defaultdict(list)
     for (filling, temperature, interaction), rows in sorted(grouped.items()):
         rows.sort(key=lambda item: float(item["disorder_full_width"]))
-        crossing = _crossing(
+        candidates = _crossing_candidates(
             np.asarray([float(row["disorder_full_width"]) for row in rows]),
-            np.asarray([float(row["rho_typ_over_arith_zero"]) for row in rows]),
-            threshold,
+            np.asarray([float(row["rho_typ_over_arith_zero"]) for row in rows]), threshold,
         )
-        if crossing is not None:
+        candidate_groups[(filling, temperature)].append((interaction, candidates))
+
+    boundaries: list[dict] = []
+    # Follow one continuous descending-threshold branch from large to small U.
+    # This prevents switching between unrelated crossings when the ratio is
+    # weakly non-monotone because of a coarse grid or the spectral floor.
+    for (filling, temperature), samples in sorted(candidate_groups.items()):
+        previous: float | None = None
+        for interaction, candidates in sorted(samples, reverse=True):
+            if not candidates:
+                previous = None
+                continue
+            crossing = min(candidates, key=lambda value: abs(value - previous)) if previous is not None else candidates[0]
+            jump = abs(crossing - previous) if previous is not None else float("nan")
             boundaries.append(
                 {"target_filling": filling, "temperature": temperature, "interaction": interaction,
                  "inverse_u_squared": 1.0 / interaction**2 if interaction > 0.0 else float("nan"),
-                 "critical_disorder": crossing, "ratio_threshold": threshold}
+                 "critical_disorder": crossing, "ratio_threshold": threshold,
+                 "crossing_candidates": len(candidates), "jump_from_previous_u": jump}
             )
+            previous = crossing
     fits: list[dict] = []
     by_group: dict[tuple[float, float], list[dict]] = defaultdict(list)
     for row in boundaries:
@@ -346,9 +373,12 @@ def _plot_large_u(boundaries: list[dict], fits: list[dict], coverage: list[dict]
     with plt.rc_context(_publication_style()):
         fig, axis = plt.subplots(figsize=(4.4, 3.5))
         groups: dict[tuple[float, float], list[dict]] = defaultdict(list)
-        for row in boundaries:
-            groups[(float(row["target_filling"]), float(row["temperature"]))].append(row)
         fit_lookup = {(float(row["target_filling"]), float(row["temperature"])): row for row in fits}
+        for row in boundaries:
+            key = (float(row["target_filling"]), float(row["temperature"]))
+            fit = fit_lookup.get(key)
+            if fit and float(row["interaction"]) >= float(fit["u_min"]):
+                groups[key].append(row)
         for key, rows in sorted(groups.items()):
             rows = [row for row in rows if np.isfinite(float(row["inverse_u_squared"]))]
             rows.sort(key=lambda row: float(row["inverse_u_squared"]))
@@ -357,7 +387,8 @@ def _plot_large_u(boundaries: list[dict], fits: list[dict], coverage: list[dict]
             line, = axis.plot(x, y, "o", markersize=2.5, label=rf"$n={key[0]:g},T={key[1]:g}$")
             fit = fit_lookup.get(key)
             if fit and x.size:
-                xx = np.linspace(0.0, float(np.max(x)), 100)
+                # Never extrapolate the large-U fit into the small-U regime.
+                xx = np.linspace(0.0, 1.0 / float(fit["u_min"])**2, 100)
                 yy = float(fit["delta_infinity"]) + float(fit["coefficient_over_u2"]) * xx
                 axis.plot(xx, yy, color=line.get_color(), linewidth=1.0)
         axis.set_xlabel(r"$1/(U/W)^2$")
@@ -409,12 +440,17 @@ def _plot_phase_lines(crossings: list[dict], boundaries: list[dict], output: Pat
             ]
             localized.sort(key=lambda row: float(row["interaction"]))
             if localized:
-                axis.plot(
-                    [float(row["critical_disorder"]) for row in localized],
-                    [float(row["interaction"]) for row in localized],
-                    "ko-", markersize=2.5, linewidth=1.0,
-                    label=rf"$\rho_{{typ}}(0)/\rho_{{arith}}(0)={localized[0]['ratio_threshold']:.0e}$",
-                )
+                disorder = np.asarray([float(row["critical_disorder"]) for row in localized])
+                interaction = np.asarray([float(row["interaction"]) for row in localized])
+                axis.plot(disorder, interaction, "ko", markersize=2.5,
+                          label=rf"$\rho_{{typ}}(0)/\rho_{{arith}}(0)={localized[0]['ratio_threshold']:.0e}$")
+                if interaction.size > 1:
+                    typical_du = float(np.median(np.diff(interaction)))
+                    for index in range(interaction.size - 1):
+                        adjacent_u = interaction[index + 1] - interaction[index] <= 1.5 * typical_du
+                        modest_jump = abs(disorder[index + 1] - disorder[index]) <= 0.5
+                        if adjacent_u and modest_jump:
+                            axis.plot(disorder[index:index + 2], interaction[index:index + 2], "k-", linewidth=1.0)
             axis.plot([0.0, 3.2], [0.0, 3.2], color="0.65", linestyle=":", linewidth=0.8,
                       label=r"$U=\Delta$")
             axis.set_xlabel(r"disorder $\Delta/W$")
@@ -447,7 +483,24 @@ def analyze_publication_tests(
     )
     boundaries, fits = fit_large_u_boundaries(points, localization_threshold, u_min * bandwidth)
     coverage = boundary_coverage(points, localization_threshold)
-    crossings = extract_zero_crossings(summaries, bandwidth)
+    reliability = {
+        (int(row["dataset"]), str(row["branch"]), round(float(row["target_filling"]), 12),
+         round(float(row["temperature"]), 12), round(float(row["interaction"]), 12),
+         round(float(row["disorder_full_width"]), 12)): bool(row["transport_reliable"])
+        for row in points
+    }
+    reliable_summaries = []
+    for row in summaries:
+        key = (
+            int(float(row["dataset"])), str(row["branch"]),
+            round(_number(row, "target_filling"), 12), round(_number(row, "temperature"), 12),
+            round(_number(row, "interaction"), 12), round(_number(row, "disorder_full_width"), 12),
+        )
+        copy = dict(row)
+        if not reliability.get(key, False):
+            copy["L12"] = "nan"
+        reliable_summaries.append(copy)
+    crossings = extract_zero_crossings(reliable_summaries, bandwidth)
     products = [
         _write_rows(output / "publication_point_diagnostics.csv", points),
         _write_rows(output / "arith_typ_covariance_test.csv", covariance),
