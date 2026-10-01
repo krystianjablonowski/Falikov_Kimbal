@@ -59,7 +59,7 @@ def calculate_publication_diagnostics(
         raise ValueError("--summaries and --points-roots must have equal lengths")
     point_rows: list[dict] = []
     summary_rows: list[dict[str, str]] = []
-    arrays: dict[tuple[int, int], dict[str, np.ndarray]] = {}
+    roots = [Path(value) for value in points_roots]
     for dataset, (summary_path, root_value) in enumerate(zip(summary_paths, points_roots)):
         rows = _read_rows(Path(summary_path))
         if temperatures:
@@ -71,10 +71,7 @@ def calculate_publication_diagnostics(
         root = Path(root_value)
         for row in rows:
             index = int(_number(row, "index"))
-            key = (dataset, index)
-            if key not in arrays:
-                arrays[key] = _load_solution(root, index)
-            data = arrays[key]
+            data = _load_solution(root, index)
             omega = data["omega"]
             temperature = _number(row, "temperature")
             tau = np.maximum(data["tau"], 0.0)
@@ -127,8 +124,8 @@ def calculate_publication_diagnostics(
         if set(branches) != {"arith", "typ"}:
             continue
         arith, typ = branches["arith"], branches["typ"]
-        data_a = arrays[(int(arith["dataset"]), int(arith["index"]))]
-        data_t = arrays[(int(typ["dataset"]), int(typ["index"]))]
+        data_a = _load_solution(roots[int(arith["dataset"])], int(arith["index"]))
+        data_t = _load_solution(roots[int(typ["dataset"])], int(typ["index"]))
         omega = data_a["omega"]
         tau_a = np.maximum(data_a["tau"], 0.0)
         tau_t = np.maximum(data_t["tau"], 0.0)
