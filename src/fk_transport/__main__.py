@@ -14,6 +14,10 @@ from .convergence_analysis import analyze_convergence
 from .finite_filling_analysis import analyze_finite_filling
 from .io import atomic_json
 from .mechanism_analysis import analyze_transport_mechanism
+from .localization_convergence import (
+    analyze_localization_convergence,
+    prepare_localization_convergence,
+)
 from .plotting import plot_all_temperature_summaries, plot_transport_heatmaps
 from .publication_tests import analyze_publication_tests
 from .spectral_profiles import plot_spectral_profiles
@@ -104,6 +108,19 @@ def _parser() -> argparse.ArgumentParser:
     analyze_convergence_parser.add_argument("--output-directory", required=True)
     analyze_convergence_parser.add_argument("--threshold", type=float, default=1e-2)
     analyze_convergence_parser.add_argument("--max-boundary-separation", type=float, default=0.1)
+    localization_prepare = sub.add_parser("prepare-localization-convergence")
+    localization_prepare.add_argument("--config", required=True)
+    localization_prepare.add_argument("--diagnostics", required=True)
+    localization_prepare.add_argument("--output-prefix", required=True)
+    localization_prepare.add_argument("--filling", type=float, default=0.4)
+    localization_prepare.add_argument("--temperature", type=float, default=0.02)
+    localization_prepare.add_argument("--interactions", nargs="+", type=float, default=[0.75, 1.5, 2.25, 3.0])
+    localization_prepare.add_argument("--ratio-target", type=float, default=1e-2)
+    localization_prepare.add_argument("--neighbors", type=int, default=3)
+    localization_analyze = sub.add_parser("analyze-localization-convergence")
+    localization_analyze.add_argument("--summaries", nargs="+", required=True)
+    localization_analyze.add_argument("--configs", nargs="+", required=True)
+    localization_analyze.add_argument("--output-directory", required=True)
     finite_filling = sub.add_parser("analyze-filling")
     finite_filling.add_argument("--input", required=True)
     finite_filling.add_argument("--output-directory", required=True)
@@ -224,6 +241,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "analyze-convergence":
         outputs=analyze_convergence(args.summaries,args.etas,args.output_directory,args.threshold,args.max_boundary_separation)
         print(json.dumps([str(path) for path in outputs],indent=2));return 0
+    if args.command == "prepare-localization-convergence":
+        report = prepare_localization_convergence(
+            load_config(args.config), args.diagnostics, args.output_prefix,
+            args.filling, args.temperature, args.interactions,
+            args.ratio_target, args.neighbors,
+        )
+        print(json.dumps(report, indent=2))
+        return 0
+    if args.command == "analyze-localization-convergence":
+        outputs = analyze_localization_convergence(
+            args.summaries, args.configs, args.output_directory
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
     if args.command == "analyze-filling":
         outputs = analyze_finite_filling(args.input, args.output_directory, args.bandwidth)
         print(json.dumps([str(path) for path in outputs], indent=2))

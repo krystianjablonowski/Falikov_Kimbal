@@ -487,3 +487,66 @@ punktów, ich indeksy, `S`, `L12`, przewodności i stosunek `sigma_typ/sigma_ari
 Konfiguracja produkcyjna jest punktem wyjścia, nie uniwersalnym certyfikatem
 zbieżności. Tolerancję przyczynowości należy ustalić na podstawie kontroli
 dyskretyzacji; surowe maksimum `Im Sigma` jest zawsze zapisane w metadanych.
+
+### Kontrola numeryczna granicy lokalizacji
+
+Oscylacje stosunku `rho_typ(0)/rho_arith(0)` wokół zadanego progu mogą
+tworzyć wiele pozornych przecięć. Przed interpretacją takiej granicy należy
+sprawdzić zbieżność względem poszerzenia `eta`, kroku siatki energii i rzędu
+kwadratury nieporządku. Mały skan kontrolny dla `n_c=0.4`, `T/W=0.02`
+przygotowuje polecenie:
+
+```bash
+python -m fk_transport prepare-localization-convergence \
+  --config configs/stage4_filling_0p4_expanded.json \
+  --diagnostics results/publication_tests_fillings_threshold_1e-2_fixed/publication_point_diagnostics.csv \
+  --output-prefix configs/stage9_localization_convergence \
+  --filling 0.4 \
+  --temperature 0.02 \
+  --interactions 0.75 1.5 2.25 3.0 \
+  --ratio-target 1e-2 \
+  --neighbors 3
+
+BATCH_SIZE=4 PYTHON_EXECUTABLE="$PWD/.venv/bin/python" \
+  bash jobs/submit_localization_convergence.sh
+```
+
+Powstają cztery konfiguracje: trzy testują malejące `eta` wraz z coraz
+gęstszą siatką energii, a czwarta podwaja rząd kwadratury przy ustalonych
+`eta` i siatce. Liczone są wyłącznie punkty typowe w sąsiedztwie granicy,
+nie cała mapa.
+
+Po zakończeniu jobów:
+
+```bash
+for cfg in configs/stage9_localization_convergence_*.json; do
+  python -m fk_transport status --config "$cfg"
+  python -m fk_transport merge --config "$cfg"
+done
+
+python -m fk_transport analyze-localization-convergence \
+  --summaries \
+    results/stage4_filling_0p4_expanded/summary.csv \
+    results/stage9_localization_convergence/eta_5e-4_n20001_q96/summary.csv \
+    results/stage9_localization_convergence/eta_2p5e-4_n40001_q96/summary.csv \
+    results/stage9_localization_convergence/eta_1p25e-4_n80001_q96/summary.csv \
+    results/stage9_localization_convergence/eta_5e-4_n20001_q192/summary.csv \
+  --configs \
+    configs/stage4_filling_0p4_expanded.json \
+    configs/stage9_localization_convergence_eta_5e-4_n20001_q96.json \
+    configs/stage9_localization_convergence_eta_2p5e-4_n40001_q96.json \
+    configs/stage9_localization_convergence_eta_1p25e-4_n80001_q96.json \
+    configs/stage9_localization_convergence_eta_5e-4_n20001_q192.json \
+  --output-directory results/stage9_localization_convergence/analysis
+```
+
+Analiza zapisuje wyłącznie PDF oraz dwie tabele CSV: wszystkie wartości
+punktowe i rozrzut między ustawieniami numerycznymi. Wyniki można wysłać na
+gałąź `results` poleceniem:
+
+```bash
+SOURCE_DIRECTORY=results/stage9_localization_convergence/analysis \
+RUN_LABEL=stage9_localization_convergence_analysis \
+RESULTS_BRANCH=results \
+bash jobs/publish_analysis_to_github.sh
+```
