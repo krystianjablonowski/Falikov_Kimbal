@@ -46,5 +46,5 @@
     "tolerance": 1e-6,
     "max_iterations": 50
   },
-  "output": {"directory": "results/stage9_fillings_near_half_T_0p05"}
+  "output": {"directory": "results/stage9_fillings_near_half_T_0p05_dense37"}
 }
