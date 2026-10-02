@@ -407,9 +407,10 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/stage8_filling_0p25_dense.json` — taka sama gęsta siatka dla
   `n_c=0.25` i temperatur `T/W=0.005, 0.01, 0.02, 0.05`; 5000 zadań
   spektralnych, grupowanych po dziesięć w 500 jobów PBS.
-- `configs/stage9_fillings_near_half_T_0p05.json` — siedem wypełnień od `0.49`
-  do `0.325` na siatce `25 x 25`, przy jednej temperaturze `T/W=0.05`;
-  8750 zadań spektralnych, grupowanych po 22 w 398 jobów PBS.
+- `configs/stage9_fillings_near_half_T_0p05.json` — sześć nowych wypełnień
+  `0.49, 0.475, 0.425, 0.375, 0.35, 0.325` na siatce `25 x 25`, przy jednej
+  temperaturze `T/W=0.05`; istniejące `n_c=0.45` pochodzi ze skanu stage 7.
+  Nowy etap ma 7500 zadań spektralnych, grupowanych po 19 w 395 jobów PBS.
 
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
