@@ -27,6 +27,7 @@ class PlottingTests(unittest.TestCase):
                 "disorder_full_width",
                 "temperature",
                 "target_filling",
+                "disorder_correlation_lambda",
                 "sigma_T0",
                 "sigma",
                 "kappa_e",
@@ -41,18 +42,20 @@ class PlottingTests(unittest.TestCase):
             with summary.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(handle, fieldnames=fieldnames)
                 writer.writeheader()
-                for temperature in (0.01, 0.02):
-                    for branch in ("arith", "typ"):
-                        for interaction in (0.0, 0.5):
-                            for disorder in (0.0, 1.0):
-                                base = 1.0 + interaction + disorder + temperature
-                                writer.writerow(
-                                    {
+                for correlation in (0.1, 1.5):
+                    for temperature in (0.01, 0.02):
+                        for branch in ("arith", "typ"):
+                            for interaction in (0.0, 0.5):
+                                for disorder in (0.0, 1.0):
+                                    base = 1.0 + interaction + disorder + temperature + correlation
+                                    writer.writerow(
+                                        {
                                         "branch": branch,
                                         "interaction": interaction,
                                         "disorder_full_width": disorder,
                                         "temperature": temperature,
                                         "target_filling": 0.5,
+                                        "disorder_correlation_lambda": correlation,
                                         "sigma_T0": base,
                                         "sigma": 0.5 * base,
                                         "kappa_e": 0.01 * base,
@@ -65,18 +68,20 @@ class PlottingTests(unittest.TestCase):
                                         "thermal_diffusivity_proxy": 0.5 * base,
                                         "transport_energy_variance": 0.1 * base,
                                         "iterations": 20 + int(10 * disorder),
-                                    }
-                                )
+                                        }
+                                    )
             outputs = plot_transport_heatmaps(summary)
-            self.assertEqual(len(outputs), 9)
+            self.assertEqual(len(outputs), 18)
             self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in outputs))
             self.assertTrue(all(path.suffix == ".pdf" for path in outputs))
+            self.assertTrue(any("lambda_0p1" in path.name for path in outputs))
+            self.assertTrue(any("lambda_1p5" in path.name for path in outputs))
             self.assertFalse(any(root.glob("*.png")))
             overview = plot_summary(summary)
             self.assertTrue(overview.is_file() and overview.stat().st_size > 0)
             self.assertEqual(overview.suffix, ".pdf")
             summaries = plot_all_temperature_summaries(summary)
-            self.assertEqual(len(summaries), 2)
+            self.assertEqual(len(summaries), 4)
             self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in summaries))
             self.assertFalse(any(root.glob("*.png")))
 

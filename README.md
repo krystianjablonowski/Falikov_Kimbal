@@ -31,10 +31,16 @@ H_lambda = H_hop + sum_i (1-lambda) epsilon_i n_i^c
 ```
 
 czyli lokalne potencjały wynoszą `(1-lambda)*epsilon` dla `n_i^f=0` oraz
-`U+(1+lambda)*epsilon` dla `n_i^f=1`. Dozwolony zakres to `-1 <= lambda <= 1`,
-a `lambda=0` dokładnie odtwarza dotychczasowy model. Dla `lambda != 0` nawet
+`U+(1+lambda)*epsilon` dla `n_i^f=1`. Parametr musi być skończoną liczbą;
+wartości `lambda>1` są dozwolone i odwracają znak sprzężenia z
+`epsilon` w kanale `n_i^f=0`. `lambda=0` dokładnie odtwarza dotychczasowy
+model. Dla `lambda != 0` nawet
 `target_filling=0.5` korzysta z bisekcji po potencjale chemicznym osobno dla
 każdej temperatury; skrót `mu=U/2` jest stosowany wyłącznie przy `lambda=0`.
+
+Pojedynczą wartość ustawia `model.disorder_correlation_lambda`. Skan wielu
+wartości definiuje lista `sweep.disorder_correlation_lambdas`; każda wartość
+staje się osobnym wymiarem manifestu i jest zapisywana w `summary.csv`.
 
 Funkcja transportowa jest liczona bezpośrednio dla ogólnego `D`:
 

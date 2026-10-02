@@ -21,9 +21,13 @@ from .transport import transport_function
 
 def build_tasks(cfg: dict) -> list[dict[str, Any]]:
     sweep = cfg["sweep"]
-    disorder_correlation_lambda = float(
-        cfg["model"].get("disorder_correlation_lambda", 0.0)
-    )
+    disorder_correlation_lambdas = [
+        float(value)
+        for value in sweep.get(
+            "disorder_correlation_lambdas",
+            [cfg["model"].get("disorder_correlation_lambda", 0.0)],
+        )
+    ]
     tasks: list[dict[str, Any]] = []
     index = 0
     if sweep.get("parameter_points") is not None:
@@ -37,43 +41,44 @@ def build_tasks(cfg: dict) -> list[dict[str, Any]]:
             for interaction in sweep["interactions"]
             for disorder in sweep["disorder_full_widths"]
         ]
-    for interaction, disorder in parameter_points:
-        for branch in sweep["branches"]:
-            fillings = [float(x) for x in sweep["target_fillings"]]
-            if (
-                fillings == [0.5]
-                and float(cfg["model"]["w1"]) == 0.5
-                and disorder_correlation_lambda == 0.0
-            ):
-                tasks.append(
-                    {
-                        "index": index,
-                        "interaction": interaction,
-                        "disorder_full_width": disorder,
-                        "branch": branch,
-                        "disorder_correlation_lambda": disorder_correlation_lambda,
-                        "target_filling": 0.5,
-                        "temperatures": [float(x) for x in sweep["temperatures"]],
-                        "half_filling": True,
-                    }
-                )
-                index += 1
-            else:
-                for filling in fillings:
-                    for temperature in sweep["temperatures"]:
-                        tasks.append(
-                            {
-                                "index": index,
-                                "interaction": interaction,
-                                "disorder_full_width": disorder,
-                                "branch": branch,
-                                "disorder_correlation_lambda": disorder_correlation_lambda,
-                                "target_filling": float(filling),
-                                "temperatures": [float(temperature)],
-                                "half_filling": False,
-                            }
-                        )
-                        index += 1
+    for disorder_correlation_lambda in disorder_correlation_lambdas:
+        for interaction, disorder in parameter_points:
+            for branch in sweep["branches"]:
+                fillings = [float(x) for x in sweep["target_fillings"]]
+                if (
+                    fillings == [0.5]
+                    and float(cfg["model"]["w1"]) == 0.5
+                    and disorder_correlation_lambda == 0.0
+                ):
+                    tasks.append(
+                        {
+                            "index": index,
+                            "interaction": interaction,
+                            "disorder_full_width": disorder,
+                            "branch": branch,
+                            "disorder_correlation_lambda": disorder_correlation_lambda,
+                            "target_filling": 0.5,
+                            "temperatures": [float(x) for x in sweep["temperatures"]],
+                            "half_filling": True,
+                        }
+                    )
+                    index += 1
+                else:
+                    for filling in fillings:
+                        for temperature in sweep["temperatures"]:
+                            tasks.append(
+                                {
+                                    "index": index,
+                                    "interaction": interaction,
+                                    "disorder_full_width": disorder,
+                                    "branch": branch,
+                                    "disorder_correlation_lambda": disorder_correlation_lambda,
+                                    "target_filling": float(filling),
+                                    "temperatures": [float(temperature)],
+                                    "half_filling": False,
+                                }
+                            )
+                            index += 1
     return tasks
 
 
@@ -109,6 +114,7 @@ def _run_task_unlocked(cfg: dict, index: int) -> dict:
             task["branch"],
             chemical_potential=interaction / 2.0,
             checkpoint_path=checkpoint,
+            disorder_correlation_lambda=task["disorder_correlation_lambda"],
         )
         filling_info = {
             "target": 0.5,
@@ -126,6 +132,7 @@ def _run_task_unlocked(cfg: dict, index: int) -> dict:
             task["branch"],
             task["target_filling"],
             temperature,
+            disorder_correlation_lambda=task["disorder_correlation_lambda"],
         )
         solution = found.solution
         filling_info = {

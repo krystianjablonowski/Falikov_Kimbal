@@ -53,16 +53,37 @@ class CorrelatedDisorderTests(unittest.TestCase):
                 "target_fillings": [0.5],
             }
         )
+        validate_config(cfg)
         tasks = build_tasks(cfg)
         self.assertEqual(len(tasks), 4)
         self.assertTrue(all(not task["half_filling"] for task in tasks))
         self.assertTrue(all(task["disorder_correlation_lambda"] == 0.5 for task in tasks))
 
-    def test_lambda_range_is_validated(self):
+    def test_nonfinite_lambda_is_rejected(self):
         cfg = copy.deepcopy(DEFAULTS)
-        cfg["model"]["disorder_correlation_lambda"] = 1.01
-        with self.assertRaisesRegex(ValueError, "must lie in"):
+        cfg["model"]["disorder_correlation_lambda"] = float("inf")
+        with self.assertRaisesRegex(ValueError, "must be finite"):
             validate_config(cfg)
+
+    def test_lambda_sweep_is_a_separate_task_dimension(self):
+        cfg = copy.deepcopy(DEFAULTS)
+        cfg["sweep"].update(
+            {
+                "interactions": [0.5],
+                "disorder_full_widths": [0.6],
+                "disorder_correlation_lambdas": [0.1, 0.5, 1.5],
+                "branches": ["arith", "typ"],
+                "temperatures": [0.05],
+                "target_fillings": [0.4],
+            }
+        )
+        validate_config(cfg)
+        tasks = build_tasks(cfg)
+        self.assertEqual(len(tasks), 6)
+        self.assertEqual(
+            {task["disorder_correlation_lambda"] for task in tasks},
+            {0.1, 0.5, 1.5},
+        )
 
 
 if __name__ == "__main__":

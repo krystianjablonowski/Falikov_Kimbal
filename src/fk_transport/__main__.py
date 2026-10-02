@@ -63,7 +63,13 @@ def _parser() -> argparse.ArgumentParser:
     activation_map.add_argument(
         "--group-by",
         nargs="+",
-        default=["branch", "interaction", "disorder_full_width", "target_filling"],
+        default=[
+            "branch",
+            "interaction",
+            "disorder_full_width",
+            "disorder_correlation_lambda",
+            "target_filling",
+        ],
     )
     activation_map.add_argument("--temperature-min", type=float)
     activation_map.add_argument("--temperature-max", type=float)

@@ -24,6 +24,7 @@ def solve_for_filling(
     branch: str,
     target_filling: float,
     temperature: float,
+    disorder_correlation_lambda: float | None = None,
 ) -> FillingResult:
     """Bracketed bisection in mu; every evaluation is a converged medium solve."""
     settings = cfg["filling"]
@@ -47,6 +48,7 @@ def solve_for_filling(
             branch,
             chemical_potential=key,
             initial_hybridization=initial,
+            disorder_correlation_lambda=disorder_correlation_lambda,
         )
         if solution.status != "success":
             raise RuntimeError(f"medium solve at mu={key:.16g} has status {solution.status}")

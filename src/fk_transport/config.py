@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -84,8 +85,8 @@ def validate_config(cfg: dict[str, Any]) -> None:
     if not (0.0 <= float(model["w1"]) <= 1.0):
         raise ValueError("w1 must lie in [0, 1]")
     correlation = float(model.get("disorder_correlation_lambda", 0.0))
-    if not (-1.0 <= correlation <= 1.0):
-        raise ValueError("disorder_correlation_lambda must lie in [-1, 1]")
+    if not math.isfinite(correlation):
+        raise ValueError("disorder_correlation_lambda must be finite")
     if int(grid["n_omega"]) < 5 or int(grid["n_omega"]) % 2 != 1:
         raise ValueError("n_omega must be odd and at least 5")
     if float(grid["omega_max"]) <= 0:
@@ -98,6 +99,17 @@ def validate_config(cfg: dict[str, Any]) -> None:
         raise ValueError("branches may contain only 'arith' and 'typ'")
     if any(float(x) < 0 for x in sweep["disorder_full_widths"]):
         raise ValueError("disorder_full_widths must be non-negative")
+    correlations = sweep.get("disorder_correlation_lambdas")
+    if correlations is not None:
+        if not isinstance(correlations, list) or not correlations:
+            raise ValueError(
+                "disorder_correlation_lambdas must be a non-empty list when provided"
+            )
+        numeric_correlations = [float(value) for value in correlations]
+        if not all(math.isfinite(value) for value in numeric_correlations):
+            raise ValueError("all disorder_correlation_lambdas must be finite")
+        if len(set(numeric_correlations)) != len(numeric_correlations):
+            raise ValueError("disorder_correlation_lambdas must not contain duplicates")
     parameter_points = sweep.get("parameter_points")
     if parameter_points is not None:
         if not isinstance(parameter_points, list) or not parameter_points:

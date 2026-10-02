@@ -119,12 +119,17 @@ def solve_medium(
     initial_hybridization: np.ndarray | None = None,
     checkpoint_path: str | Path | None = None,
     progress: Callable[[int, float], None] | None = None,
+    disorder_correlation_lambda: float | None = None,
 ) -> SolverResult:
     if branch not in {"arith", "typ"}:
         raise ValueError("branch must be 'arith' or 'typ'")
     model, grid, num = cfg["model"], cfg["grid"], cfg["numerics"]
     d, hopping, w1 = float(model["half_bandwidth"]), float(model["hopping"]), float(model["w1"])
-    disorder_correlation_lambda = float(model.get("disorder_correlation_lambda", 0.0))
+    disorder_correlation_lambda = float(
+        model.get("disorder_correlation_lambda", 0.0)
+        if disorder_correlation_lambda is None
+        else disorder_correlation_lambda
+    )
     if abs(d - 2.0 * hopping) > 1.0e-12 * max(1.0, d):
         raise ValueError("half_bandwidth must equal 2*hopping")
     interaction = float(interaction)
@@ -145,7 +150,7 @@ def solve_medium(
     checkpoint = Path(checkpoint_path) if checkpoint_path is not None else None
     checkpoint_signature = (
         f"{config_hash(cfg)}|{interaction:.17g}|{disorder_full_width:.17g}|"
-        f"{branch}|{mu:.17g}"
+        f"{branch}|{mu:.17g}|{disorder_correlation_lambda:.17g}"
     )
     start_iteration = 0
     residuals: list[float] = []

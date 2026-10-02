@@ -34,6 +34,15 @@ def _correlation_label(rows: list[dict[str, str]]) -> str:
     return rf", $\lambda={finite[0]:g}$" if len(finite) == 1 else r", varying $\lambda$"
 
 
+def _row_correlation(row: dict[str, str]) -> float:
+    value = _optional_float(row.get("disorder_correlation_lambda", 0.0))
+    return 0.0 if not np.isfinite(value) else value
+
+
+def _number_tag(value: float) -> str:
+    return f"{value:.6g}".replace("-", "m").replace(".", "p")
+
+
 def _grid(
     rows: list[dict[str, str]],
     branch: str,
@@ -177,6 +186,7 @@ def plot_summary(
     bandwidth: float = 1.0,
     filling: float | None = None,
     temperature: float | None = None,
+    correlation_lambda: float | None = None,
 ) -> Path:
     try:
         import matplotlib
@@ -186,6 +196,16 @@ def plot_summary(
         raise RuntimeError("plotting requires the optional matplotlib dependency") from exc
     summary_path = Path(summary_path)
     rows = _read_rows(summary_path)
+    if correlation_lambda is not None:
+        rows = [
+            row
+            for row in rows
+            if np.isclose(
+                _row_correlation(row), correlation_lambda, rtol=0.0, atol=1e-12
+            )
+        ]
+        if not rows:
+            raise ValueError(f"summary contains no rows for lambda={correlation_lambda:g}")
     output = (
         Path(output_path).with_suffix(".pdf")
         if output_path
@@ -300,22 +320,39 @@ def plot_all_temperature_summaries(
         if legacy.is_file():
             legacy.unlink()
     outputs: list[Path] = []
-    for filling in sorted({float(row["target_filling"]) for row in rows}):
-        filling_tag = f"{filling:.6g}".replace(".", "p")
-        for temperature in sorted({float(row["temperature"]) for row in rows}):
-            temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
-            output = output_directory / (
-                f"transport_summary_n_{filling_tag}_T_{temperature_tag}.pdf"
+    correlations = sorted({_row_correlation(row) for row in rows})
+    multiple_correlations = len(correlations) > 1
+    for correlation_lambda in correlations:
+        selected = [
+            row
+            for row in rows
+            if np.isclose(
+                _row_correlation(row), correlation_lambda, rtol=0.0, atol=1e-12
             )
-            outputs.append(
-                plot_summary(
-                    summary_path,
-                    output,
-                    bandwidth,
-                    filling=filling,
-                    temperature=temperature,
+        ]
+        lambda_suffix = (
+            f"_lambda_{_number_tag(correlation_lambda)}"
+            if multiple_correlations
+            else ""
+        )
+        for filling in sorted({float(row["target_filling"]) for row in selected}):
+            filling_tag = f"{filling:.6g}".replace(".", "p")
+            for temperature in sorted({float(row["temperature"]) for row in selected}):
+                temperature_tag = f"{temperature / bandwidth:.6g}".replace(".", "p")
+                output = output_directory / (
+                    f"transport_summary_n_{filling_tag}_T_{temperature_tag}"
+                    f"{lambda_suffix}.pdf"
                 )
-            )
+                outputs.append(
+                    plot_summary(
+                        summary_path,
+                        output,
+                        bandwidth,
+                        filling=filling,
+                        temperature=temperature,
+                        correlation_lambda=correlation_lambda,
+                    )
+                )
     return outputs
 
 
@@ -323,6 +360,7 @@ def plot_transport_heatmaps(
     summary_path: str | Path,
     output_directory: str | Path | None = None,
     bandwidth: float = 1.0,
+    correlation_lambda: float | None = None,
 ) -> list[Path]:
     """Plot non-interpolated U-Delta maps for sigma and electronic kappa."""
     try:
@@ -334,6 +372,34 @@ def plot_transport_heatmaps(
 
     summary_path = Path(summary_path)
     rows = _read_rows(summary_path)
+    correlations = sorted({_row_correlation(row) for row in rows})
+    if correlation_lambda is None and len(correlations) > 1:
+        outputs: list[Path] = []
+        for value in correlations:
+            outputs.extend(
+                plot_transport_heatmaps(
+                    summary_path,
+                    output_directory=output_directory,
+                    bandwidth=bandwidth,
+                    correlation_lambda=value,
+                )
+            )
+        return outputs
+    if correlation_lambda is not None:
+        rows = [
+            row
+            for row in rows
+            if np.isclose(
+                _row_correlation(row), correlation_lambda, rtol=0.0, atol=1e-12
+            )
+        ]
+        if not rows:
+            raise ValueError(f"summary contains no rows for lambda={correlation_lambda:g}")
+    lambda_suffix = (
+        f"_lambda_{_number_tag(float(correlation_lambda))}"
+        if correlation_lambda is not None
+        else ""
+    )
     output_directory = Path(output_directory) if output_directory else summary_path.parent
     output_directory.mkdir(parents=True, exist_ok=True)
     temperatures = sorted({float(row["temperature"]) for row in rows})
@@ -385,7 +451,9 @@ def plot_transport_heatmaps(
                 else:
                     color_axis.set_visible(False)
                 fig.subplots_adjust(left=0.09, right=0.94, bottom=0.16, top=0.91)
-                output = output_directory / f"transport_heatmap_n_{filling_tag}_sigma_T0.pdf"
+                output = output_directory / (
+                    f"transport_heatmap_n_{filling_tag}_sigma_T0{lambda_suffix}.pdf"
+                )
                 output = _save_publication_figure(fig, output)
                 plt.close(fig)
                 outputs.append(output)
@@ -504,7 +572,8 @@ def plot_transport_heatmaps(
                             color_axes[row_index].set_visible(False)
                     fig.subplots_adjust(left=0.09, right=0.94, bottom=0.10, top=0.94)
                     output = output_directory / (
-                        f"{group_name}_heatmaps_n_{filling_tag}_T_{temperature_tag}.pdf"
+                        f"{group_name}_heatmaps_n_{filling_tag}_T_{temperature_tag}"
+                        f"{lambda_suffix}.pdf"
                     )
                     output = _save_publication_figure(fig, output)
                     plt.close(fig)
