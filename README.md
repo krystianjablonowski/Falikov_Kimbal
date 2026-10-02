@@ -411,6 +411,9 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
   `0.49, 0.475, 0.425, 0.375, 0.35, 0.325` na siatce `37 x 37`, przy jednej
   temperaturze `T/W=0.05`; istniejące `n_c=0.45` pochodzi ze skanu stage 7.
   Nowy etap ma 16428 zadań spektralnych, grupowanych po 24 w 685 jobów PBS.
+- `configs/stage10_filling_0p4_multitemp_dense37.json` — wypełnienie `n_c=0.4`,
+  temperatury `T/W=0.05, 0.1, 0.2, 0.5` i siatka `37 x 37`; 10952 punkty
+  spektralne, grupowane po 11 w 996 jobów PBS.
 
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
