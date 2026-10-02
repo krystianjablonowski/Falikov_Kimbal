@@ -439,6 +439,44 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
   `lambda=0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2`; 21904 punkty
   spektralne, grupowane po 11 w 1992 joby PBS. Punkt `lambda=0` można dołączyć
   ze skanu stage 10.
+- `configs/stage12_thermopower_sign_lambda0.json` — bezpośredni test zmiany
+  znaku termosiły przy `lambda=0`: wypełnienia po obu stronach progu
+  `n_c=1/4`, pięć temperatur, cztery przekroje nieporządku oraz 33 wartości
+  `U/W` od `0` do `4`. Powstaje 10560 punktów spektralnych; `BATCH_SIZE=11`
+  daje 960 jobów PBS.
+
+### Test wymuszonej zmiany znaku termosiły
+
+Dla `w1=1/2` rekonstrukcja pojedynczego pasma w dwa podpasma przewiduje
+wymuszoną zmianę znaku `S(U)` w przedziale `1/4 < n_c < 1/2`. Wypełnienia
+`0.20` i `0.24` są próbami kontrolnymi poniżej progu, `0.25` testuje sam próg,
+a `0.26, 0.30, 0.40, 0.45, 0.49` leżą w przewidywanym przedziale.
+
+```bash
+PYTHONNOUSERSITE=1 PYTHONPATH="$PWD/src" \
+PYTHON_EXECUTABLE="$PWD/.venv/bin/python" BATCH_SIZE=11 \
+bash jobs/submit_pbs_array.sh configs/stage12_thermopower_sign_lambda0.json
+```
+
+Po zakończeniu obliczeń:
+
+```bash
+PYTHONNOUSERSITE=1 PYTHONPATH="$PWD/src" \
+"$PWD/.venv/bin/python" -m fk_transport merge \
+  --config configs/stage12_thermopower_sign_lambda0.json
+
+PYTHONNOUSERSITE=1 PYTHONPATH="$PWD/src" \
+"$PWD/.venv/bin/python" -m fk_transport analyze-thermopower-sign \
+  --summaries results/stage12_thermopower_sign_lambda0/summary.csv \
+  --output-directory results/stage12_thermopower_sign_lambda0/sign_analysis \
+  --conductivity-relative-floor 1e-8
+```
+
+Analiza zapisuje znaki na końcach każdej krzywej, wszystkie interpolowane
+przecięcia `S=0`, test przewidywania dla każdego `(n_c,T,branch,Delta)` oraz
+dwa rysunki PDF. Punkty, w których przewodność spadła poniżej podanej części
+maksimum danej krzywej, nie są używane jako dowód zmiany znaku: twierdzenie
+wymaga ciągłej ścieżki z niezerowym `M0`.
 
 ### Ilościowy test niemonotoniczności względem lambda
 

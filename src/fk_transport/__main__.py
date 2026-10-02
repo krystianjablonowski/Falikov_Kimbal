@@ -31,6 +31,7 @@ from .temperature_analysis import (
     reweight_point,
 )
 from .thermopower_compensation import analyze_thermopower_compensation
+from .thermopower_sign_analysis import analyze_thermopower_sign
 from .validation import run_validation
 
 
@@ -188,6 +189,10 @@ def _parser() -> argparse.ArgumentParser:
     lambda_phase.add_argument("--w1", type=float, default=0.5)
     lambda_phase.add_argument("--quadrature-order", type=int, default=256)
     lambda_phase.add_argument("--maximum-profiles", type=int, default=6)
+    sign_test = sub.add_parser("analyze-thermopower-sign")
+    sign_test.add_argument("--summaries", nargs="+", required=True)
+    sign_test.add_argument("--output-directory", required=True)
+    sign_test.add_argument("--conductivity-relative-floor", type=float, default=1.0e-8)
     return parser
 
 
@@ -350,6 +355,14 @@ def main(argv: list[str] | None = None) -> int:
             args.w1,
             args.quadrature_order,
             args.maximum_profiles,
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "analyze-thermopower-sign":
+        outputs = analyze_thermopower_sign(
+            args.summaries,
+            args.output_directory,
+            args.conductivity_relative_floor,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0
