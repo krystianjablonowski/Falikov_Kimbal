@@ -22,6 +22,20 @@ Domyślnie `D=0.5`, `t*=0.25`, `D=2 t*`, `w1=0.5`. Parametr
 `[-Delta/2, Delta/2]`. Jednostki to `k_B=e=1`; ogólny prefaktor transportowy
 jest wyłączony, więc `sigma` i `kappa_e` są w jednostkach naturalnych.
 
+Opcjonalny parametr `model.disorder_correlation_lambda` realizuje skorelowany
+nieporządek
+
+```text
+H_lambda = H_hop + sum_i (1-lambda) epsilon_i n_i^c
+           + sum_i (U+2 lambda epsilon_i) n_i^f n_i^c,
+```
+
+czyli lokalne potencjały wynoszą `(1-lambda)*epsilon` dla `n_i^f=0` oraz
+`U+(1+lambda)*epsilon` dla `n_i^f=1`. Dozwolony zakres to `-1 <= lambda <= 1`,
+a `lambda=0` dokładnie odtwarza dotychczasowy model. Dla `lambda != 0` nawet
+`target_filling=0.5` korzysta z bisekcji po potencjale chemicznym osobno dla
+każdej temperatury; skrót `mu=U/2` jest stosowany wyłącznie przy `lambda=0`.
+
 Funkcja transportowa jest liczona bezpośrednio dla ogólnego `D`:
 
 ```text

@@ -175,6 +175,7 @@ def save_point(
         "iterations": solution.iterations,
         "converged": solution.converged,
         "chemical_potential": solution.chemical_potential,
+        "disorder_correlation_lambda": solution.disorder_correlation_lambda,
         "metrics": solution.metrics,
         "filling": filling_info,
     }

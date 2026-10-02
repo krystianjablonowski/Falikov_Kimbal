@@ -21,6 +21,9 @@ from .transport import transport_function
 
 def build_tasks(cfg: dict) -> list[dict[str, Any]]:
     sweep = cfg["sweep"]
+    disorder_correlation_lambda = float(
+        cfg["model"].get("disorder_correlation_lambda", 0.0)
+    )
     tasks: list[dict[str, Any]] = []
     index = 0
     if sweep.get("parameter_points") is not None:
@@ -37,13 +40,18 @@ def build_tasks(cfg: dict) -> list[dict[str, Any]]:
     for interaction, disorder in parameter_points:
         for branch in sweep["branches"]:
             fillings = [float(x) for x in sweep["target_fillings"]]
-            if fillings == [0.5] and float(cfg["model"]["w1"]) == 0.5:
+            if (
+                fillings == [0.5]
+                and float(cfg["model"]["w1"]) == 0.5
+                and disorder_correlation_lambda == 0.0
+            ):
                 tasks.append(
                     {
                         "index": index,
                         "interaction": interaction,
                         "disorder_full_width": disorder,
                         "branch": branch,
+                        "disorder_correlation_lambda": disorder_correlation_lambda,
                         "target_filling": 0.5,
                         "temperatures": [float(x) for x in sweep["temperatures"]],
                         "half_filling": True,
@@ -59,6 +67,7 @@ def build_tasks(cfg: dict) -> list[dict[str, Any]]:
                                 "interaction": interaction,
                                 "disorder_full_width": disorder,
                                 "branch": branch,
+                                "disorder_correlation_lambda": disorder_correlation_lambda,
                                 "target_filling": float(filling),
                                 "temperatures": [float(temperature)],
                                 "half_filling": False,

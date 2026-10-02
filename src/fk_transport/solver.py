@@ -25,6 +25,7 @@ class SolverResult:
     branch: str
     interaction: float
     disorder_full_width: float
+    disorder_correlation_lambda: float
     chemical_potential: float
     w1: float
     converged: bool
@@ -123,6 +124,7 @@ def solve_medium(
         raise ValueError("branch must be 'arith' or 'typ'")
     model, grid, num = cfg["model"], cfg["grid"], cfg["numerics"]
     d, hopping, w1 = float(model["half_bandwidth"]), float(model["hopping"]), float(model["w1"])
+    disorder_correlation_lambda = float(model.get("disorder_correlation_lambda", 0.0))
     if abs(d - 2.0 * hopping) > 1.0e-12 * max(1.0, d):
         raise ValueError("half_bandwidth must equal 2*hopping")
     interaction = float(interaction)
@@ -171,7 +173,14 @@ def solve_medium(
 
     def evaluate(hyb: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]:
         local = local_green(
-            omega, hyb, disorder_nodes, mu, interaction, w1, broadening
+            omega,
+            hyb,
+            disorder_nodes,
+            mu,
+            interaction,
+            w1,
+            broadening,
+            disorder_correlation_lambda,
         )
         local_rho = -local.imag / np.pi
         rho_arith_local = np.sum(disorder_weights[:, None] * local_rho, axis=0)
@@ -263,6 +272,7 @@ def solve_medium(
         branch=branch,
         interaction=interaction,
         disorder_full_width=disorder_full_width,
+        disorder_correlation_lambda=disorder_correlation_lambda,
         chemical_potential=mu,
         w1=w1,
         converged=converged,

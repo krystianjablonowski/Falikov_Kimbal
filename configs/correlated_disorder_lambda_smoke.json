@@ -1,0 +1,37 @@
+{
+  "model": {
+    "half_bandwidth": 0.5,
+    "hopping": 0.25,
+    "w1": 0.5,
+    "disorder_correlation_lambda": 0.5
+  },
+  "grid": {"omega_max": 4.0, "n_omega": 2001},
+  "numerics": {
+    "broadening": 0.002,
+    "n_disorder_quadrature": 48,
+    "n_band_quadrature": 160,
+    "mixing": 0.35,
+    "tolerance": 2e-7,
+    "max_iterations": 700,
+    "rho_floor": 1e-250,
+    "hilbert_padding_factor": 8,
+    "checkpoint_every": 25,
+    "causality_tolerance": 1e-7,
+    "l11_floor": 1e-14,
+    "moment_tolerance": 1e-12
+  },
+  "sweep": {
+    "interactions": [0.5, 1.0],
+    "disorder_full_widths": [0.2, 0.6],
+    "branches": ["arith", "typ"],
+    "temperatures": [0.05],
+    "target_fillings": [0.5]
+  },
+  "filling": {
+    "mu_min": -3.0,
+    "mu_max": 4.0,
+    "tolerance": 1e-6,
+    "max_iterations": 50
+  },
+  "output": {"directory": "results/correlated_disorder_lambda_smoke"}
+}

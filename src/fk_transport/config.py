@@ -8,7 +8,12 @@ from typing import Any
 
 
 DEFAULTS: dict[str, Any] = {
-    "model": {"half_bandwidth": 0.5, "hopping": 0.25, "w1": 0.5},
+    "model": {
+        "half_bandwidth": 0.5,
+        "hopping": 0.25,
+        "w1": 0.5,
+        "disorder_correlation_lambda": 0.0,
+    },
     "grid": {"omega_max": 4.0, "n_omega": 2001},
     "numerics": {
         "broadening": 1.0e-3,
@@ -78,6 +83,9 @@ def validate_config(cfg: dict[str, Any]) -> None:
         raise ValueError("model must satisfy half_bandwidth == 2*hopping > 0")
     if not (0.0 <= float(model["w1"]) <= 1.0):
         raise ValueError("w1 must lie in [0, 1]")
+    correlation = float(model.get("disorder_correlation_lambda", 0.0))
+    if not (-1.0 <= correlation <= 1.0):
+        raise ValueError("disorder_correlation_lambda must lie in [-1, 1]")
     if int(grid["n_omega"]) < 5 or int(grid["n_omega"]) % 2 != 1:
         raise ValueError("n_omega must be odd and at least 5")
     if float(grid["omega_max"]) <= 0:

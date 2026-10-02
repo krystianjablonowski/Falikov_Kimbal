@@ -22,6 +22,18 @@ def _read_rows(summary_path: Path) -> list[dict[str, str]]:
     return rows
 
 
+def _correlation_label(rows: list[dict[str, str]]) -> str:
+    """Return a compact lambda label, while accepting legacy summaries."""
+    values = sorted(
+        {
+            _optional_float(row.get("disorder_correlation_lambda", 0.0))
+            for row in rows
+        }
+    )
+    finite = [value for value in values if np.isfinite(value)]
+    return rf", $\lambda={finite[0]:g}$" if len(finite) == 1 else r", varying $\lambda$"
+
+
 def _grid(
     rows: list[dict[str, str]],
     branch: str,
@@ -257,7 +269,12 @@ def plot_summary(
         ]
         fig.legend(handles=u_handles + branch_handles, loc="upper center", ncol=4,
                    frameon=False, bbox_to_anchor=(0.5, 0.995))
-        fig.suptitle(rf"$n_c={filling:g}$, $T/W={temperature / bandwidth:g}$", y=0.90, fontsize=9)
+        fig.suptitle(
+            rf"$n_c={filling:g}$, $T/W={temperature / bandwidth:g}$"
+            + _correlation_label(rows),
+            y=0.90,
+            fontsize=9,
+        )
         fig.subplots_adjust(left=0.08, right=0.98, bottom=0.10, top=0.78, wspace=0.38, hspace=0.36)
         output = _save_publication_figure(fig, output)
         plt.close(fig)
@@ -355,7 +372,9 @@ def plot_transport_heatmaps(
                 for panel, (axis, branch, (x, y, values)) in enumerate(zip(axes, branches, grids)):
                     image = _draw_map(
                         axis, x, y, values,
-                        rf"{branch}: $\sigma(T\to0)$, $n_c={filling:g}$", norm,
+                        rf"{branch}: $\sigma(T\to0)$, $n_c={filling:g}$"
+                        + _correlation_label(rows),
+                        norm,
                     )
                     if panel == 1:
                         axis.set_ylabel("")
@@ -469,7 +488,8 @@ def plot_transport_heatmaps(
                                 x,
                                 y,
                                 values,
-                                rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$",
+                                rf"{branch}, $n_c={filling:g}$, $T/W={temperature / bandwidth:g}$"
+                                + _correlation_label(rows),
                                 norms[field],
                                 cmap="inferno" if scale == "log" else _signed_colormap(),
                             )
