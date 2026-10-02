@@ -13,6 +13,7 @@ from .convergence_scan import prepare_convergence_configs
 from .convergence_analysis import analyze_convergence
 from .finite_filling_analysis import analyze_finite_filling
 from .io import atomic_json
+from .lambda_phase_analysis import analyze_lambda_phase
 from .mechanism_analysis import analyze_transport_mechanism
 from .localization_convergence import (
     analyze_localization_convergence,
@@ -177,6 +178,16 @@ def _parser() -> argparse.ArgumentParser:
     publication.add_argument("--localization-threshold", type=float, default=1.0e-4)
     publication.add_argument("--u-min", type=float, default=1.5)
     publication.add_argument("--conductivity-relative-floor", type=float, default=1.0e-4)
+    lambda_phase = sub.add_parser("analyze-lambda-phase")
+    lambda_phase.add_argument("--summaries", nargs="+", required=True)
+    lambda_phase.add_argument("--points-roots", nargs="+", required=True)
+    lambda_phase.add_argument("--output-directory", required=True)
+    lambda_phase.add_argument("--filling", type=float, default=0.4)
+    lambda_phase.add_argument("--temperature", type=float, default=0.05)
+    lambda_phase.add_argument("--bandwidth", type=float, default=1.0)
+    lambda_phase.add_argument("--w1", type=float, default=0.5)
+    lambda_phase.add_argument("--quadrature-order", type=int, default=256)
+    lambda_phase.add_argument("--maximum-profiles", type=int, default=6)
     return parser
 
 
@@ -325,6 +336,20 @@ def main(argv: list[str] | None = None) -> int:
             args.localization_threshold,
             args.u_min,
             args.conductivity_relative_floor,
+        )
+        print(json.dumps([str(path) for path in outputs], indent=2))
+        return 0
+    if args.command == "analyze-lambda-phase":
+        outputs = analyze_lambda_phase(
+            args.summaries,
+            args.points_roots,
+            args.output_directory,
+            args.filling,
+            args.temperature,
+            args.bandwidth,
+            args.w1,
+            args.quadrature_order,
+            args.maximum_profiles,
         )
         print(json.dumps([str(path) for path in outputs], indent=2))
         return 0

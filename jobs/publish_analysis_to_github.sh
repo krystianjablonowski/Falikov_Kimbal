@@ -13,7 +13,7 @@ git worktree add --detach "${WORKTREE}" "origin/${RESULTS_BRANCH}"
 DESTINATION="${WORKTREE}/${RUN_LABEL}"
 case "${DESTINATION}" in "${WORKTREE}"/*) ;; *) exit 4;; esac
 rm -rf -- "${DESTINATION}";mkdir -p "${DESTINATION}"
-for source in "${SOURCE_DIRECTORY}"/*.csv "${SOURCE_DIRECTORY}"/*.pdf;do
+for source in "${SOURCE_DIRECTORY}"/*.csv "${SOURCE_DIRECTORY}"/*.json "${SOURCE_DIRECTORY}"/*.pdf;do
   [[ -f "${source}" ]] && cp "${source}" "${DESTINATION}/"
 done
 git -C "${WORKTREE}" add "${RUN_LABEL}"

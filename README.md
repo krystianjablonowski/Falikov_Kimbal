@@ -434,6 +434,52 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/stage10_filling_0p4_multitemp_dense37.json` — wypełnienie `n_c=0.4`,
   temperatury `T/W=0.05, 0.1, 0.2, 0.5` i siatka `37 x 37`; 10952 punkty
   spektralne, grupowane po 11 w 996 jobów PBS.
+- `configs/stage11_filling_0p4_T_0p05_lambda_scan_dense37.json` — wypełnienie
+  `n_c=0.4`, temperatura `T/W=0.05`, siatka `37 x 37` oraz
+  `lambda=0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2`; 21904 punkty
+  spektralne, grupowane po 11 w 1992 joby PBS. Punkt `lambda=0` można dołączyć
+  ze skanu stage 10.
+
+### Ilościowy test niemonotoniczności względem lambda
+
+Po ukończeniu i scaleniu stage 10 oraz stage 11 można bez ponownego liczenia
+DMFT wyznaczyć liniowy mnożnik stabilności typowego ośrodka przy poziomie
+Fermiego. Kryterium `log Lambda_typ > 0` oznacza wzrost infinitesymalnej
+typowej DOS (stronę metaliczną), a `log Lambda_typ < 0` jej zanik. Analizator
+wyznacza udział obszaru metalicznego, liczbę jego spójnych składowych oraz
+punkty o sekwencji izolator--metal--izolator:
+
+```bash
+python -m fk_transport analyze-lambda-phase \
+  --summaries \
+    results/stage10_filling_0p4_multitemp_dense37/summary.csv \
+    results/stage11_filling_0p4_T_0p05_lambda_scan_dense37/summary.csv \
+  --points-roots \
+    results/stage10_filling_0p4_multitemp_dense37/points \
+    results/stage11_filling_0p4_T_0p05_lambda_scan_dense37/points \
+  --output-directory results/stage11_lambda_phase_analysis \
+  --filling 0.4 \
+  --temperature 0.05 \
+  --bandwidth 1.0 \
+  --w1 0.5
+```
+
+Powstają tabele punktowe, `lambda_phase_fraction.csv`, lista interpolowanych
+przecięć w `lambda_reentrant_crossings.csv`, raport JSON oraz trzy rysunki PDF:
+udział i spójność metalu, mapy znaku `log Lambda_typ` i wybrane przebiegi po
+`lambda`. Kolumna `missing_points` musi być równa zero przed interpretacją
+udziału powierzchni. Przecięcia pomiędzy rzadko próbkowanymi wartościami
+`lambda` są interpolacją diagnostyczną; ich dokładne położenie wymaga lokalnego
+zagęszczenia skanu.
+
+Gotową analizę wysyła się na gałąź `results` poleceniem:
+
+```bash
+SOURCE_DIRECTORY=results/stage11_lambda_phase_analysis \
+RUN_LABEL=stage11_lambda_phase_analysis \
+RESULTS_BRANCH=results \
+bash jobs/publish_analysis_to_github.sh
+```
 
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
