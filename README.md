@@ -407,6 +407,9 @@ oznaczana jako `ill_conditioned`, a nie prezentowana jako wynik fizyczny.
 - `configs/stage8_filling_0p25_dense.json` — taka sama gęsta siatka dla
   `n_c=0.25` i temperatur `T/W=0.005, 0.01, 0.02, 0.05`; 5000 zadań
   spektralnych, grupowanych po dziesięć w 500 jobów PBS.
+- `configs/stage9_fillings_near_half_T_0p05.json` — siedem wypełnień od `0.49`
+  do `0.325` na siatce `25 x 25`, przy jednej temperaturze `T/W=0.05`;
+  8750 zadań spektralnych, grupowanych po 22 w 398 jobów PBS.
 
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
