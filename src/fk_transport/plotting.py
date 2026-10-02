@@ -6,6 +6,14 @@ from pathlib import Path
 import numpy as np
 
 
+def _optional_float(value: str | float | None) -> float:
+    """Parse a CSV number, treating empty/invalid diagnostic cells as missing."""
+    try:
+        return float(value) if value not in (None, "") else float("nan")
+    except (TypeError, ValueError):
+        return float("nan")
+
+
 def _read_rows(summary_path: Path) -> list[dict[str, str]]:
     with summary_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
@@ -38,7 +46,7 @@ def _grid(
     u_index = {value: index for index, value in enumerate(interactions)}
     d_index = {value: index for index, value in enumerate(disorders)}
     for row in selected:
-        value = float(row[field])
+        value = _optional_float(row.get(field))
         if np.isfinite(value) and (value > 0.0 or not positive_only):
             values[u_index[float(row["interaction"])], d_index[float(row["disorder_full_width"])]] = value
     return disorders, interactions, values
@@ -218,7 +226,7 @@ def plot_summary(
                     ]
                     group.sort(key=lambda item: float(item["disorder_full_width"]))
                     x = np.array([float(item["disorder_full_width"]) / bandwidth for item in group])
-                    y = np.array([float(item[field]) for item in group])
+                    y = np.array([_optional_float(item.get(field)) for item in group])
                     valid = np.isfinite(y) & ((y > 0.0) if logarithmic else True)
                     axis.plot(
                         x[valid], y[valid], linestyle=line_style, marker=marker,

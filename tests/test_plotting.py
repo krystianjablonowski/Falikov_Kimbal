@@ -58,7 +58,9 @@ class PlottingTests(unittest.TestCase):
                                         "kappa_e": 0.01 * base,
                                         "c_v_electronic": 0.02 * base,
                                         "K0_thermo": 0.3 * base,
-                                        "lorenz_over_L0": base,
+                                        "lorenz_over_L0": ""
+                                        if branch == "typ" and disorder == 1.0
+                                        else base,
                                         "charge_diffusivity_proxy": 0.4 * base,
                                         "thermal_diffusivity_proxy": 0.5 * base,
                                         "transport_energy_variance": 0.1 * base,
