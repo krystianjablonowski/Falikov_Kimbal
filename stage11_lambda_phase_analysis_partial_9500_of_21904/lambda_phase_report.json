@@ -1,0 +1,19 @@
+{
+  "linearized_criterion": "metal iff log_lambda_typ > 0",
+  "maximum_metal_fraction": 0.4397370343316289,
+  "maximum_metal_fraction_lambda": 1.25,
+  "reentrant_AI_metal_AI_points": 280,
+  "sampled_lambdas": [
+    0.0,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    1.25,
+    1.5,
+    2.0
+  ],
+  "target_filling": 0.4,
+  "temperature": 0.05
+}
