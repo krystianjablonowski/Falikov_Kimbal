@@ -519,6 +519,11 @@ RESULTS_BRANCH=results \
 bash jobs/publish_analysis_to_github.sh
 ```
 
+Skrypty publikujące domyślnie aktualizują istniejący `RUN_LABEL` bez usuwania
+plików, których nie ma już lokalnie. Dzięki temu lokalne czyszczenie wykresów
+nie kasuje ich z gałęzi `results`. Pełne zastąpienie zdalnego katalogu wymaga
+jawnego ustawienia `PUBLISH_REPLACE=1`.
+
 Analiza niepołowicznego wypełnienia z istniejącego `summary.csv`:
 
 ```bash

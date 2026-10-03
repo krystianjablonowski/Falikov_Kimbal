@@ -12,7 +12,13 @@ CONFIG="${CONFIG:-configs/pilot_half_filling.json}"
 RUN_LABEL="${RUN_LABEL:-$(basename "${CONFIG}" .json)}"
 RESULTS_BRANCH="${RESULTS_BRANCH:-results}"
 PUBLISH_MODE="${PUBLISH_MODE:-summary}"
+PUBLISH_REPLACE="${PUBLISH_REPLACE:-0}"
 export PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}"
+
+if [[ "${PUBLISH_REPLACE}" != "0" && "${PUBLISH_REPLACE}" != "1" ]]; then
+  echo "PUBLISH_REPLACE must be 0 (preserve remote files) or 1 (replace directory)" >&2
+  exit 2
+fi
 
 "${PYTHON_EXECUTABLE}" -m fk_transport status --config "${CONFIG}"
 "${PYTHON_EXECUTABLE}" -m fk_transport merge --config "${CONFIG}"
@@ -46,7 +52,9 @@ case "${DESTINATION}" in
     exit 4
     ;;
 esac
-rm -rf -- "${DESTINATION}"
+if [[ "${PUBLISH_REPLACE}" == "1" ]]; then
+  rm -rf -- "${DESTINATION}"
+fi
 mkdir -p "${DESTINATION}"
 
 if [[ "${PUBLISH_MODE}" == "full" ]]; then
