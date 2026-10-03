@@ -1,0 +1,8 @@
+{
+  "conductivity_relative_floor": 1e-08,
+  "diagnostic_curves": 320,
+  "forced_crossing_confirmed": 199,
+  "forced_crossing_curves": 200,
+  "interpretation": "The theorem requires a continuous conducting path with M0 > 0.",
+  "lambda": 0.0
+}
